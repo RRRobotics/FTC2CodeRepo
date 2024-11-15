@@ -83,11 +83,18 @@ public class RRTeleOp extends OpMode {
 
         //Floor Pickup Code
         if (gamepad1.dpad_right) {
-            Extend.setPosition(1);
+            Extend.setPosition(0.2);
         }
         if (gamepad1.dpad_left) {
             Extend.setPosition(0);
         }
+        if (gamepad1.dpad_up) {
+            Pivot.setPosition(0);
+        }
+        if (gamepad1.dpad_down) {
+            Pivot.setPosition(0.5);
+        }
+
 
 
 
