@@ -21,6 +21,9 @@ public class RRTeleOp extends OpMode {
     CRServo Intake;
     private double speed_factor = 0.4;
     private int offset;
+    private final int GRAB_POSITION = -1200;
+    private final int MAX_POSITION = -5700;
+    private final int SCORED_POSITION = -4000;
 
 
 
@@ -48,6 +51,7 @@ public class RRTeleOp extends OpMode {
         telemetry.addData("arm position", Arm.getCurrentPosition());
         telemetry.addData("arm target", Arm.getTargetPosition());
         telemetry.addData("offset", offset);
+        telemetry.update();
         if (gamepad1.right_trigger > 0.5)
             speed_factor = 1;
         else
@@ -86,16 +90,16 @@ public class RRTeleOp extends OpMode {
             //Floor position - Zero
         }
         if (gamepad1.triangle && !gamepad1.share) {
-            setArmPosition(-570);
+            setArmPosition(MAX_POSITION);
             //Raised - ready to score
         }
         if (gamepad1.square) {
             //Pickup position
-            setArmPosition(-190);
+            setArmPosition(GRAB_POSITION);
         }
         if (gamepad1.circle) {
             //Place - Pull down
-            setArmPosition(-370);
+            setArmPosition(SCORED_POSITION);
         }
 
         //Floor Pickup
@@ -125,7 +129,7 @@ public class RRTeleOp extends OpMode {
     }
 
     public void setArmPosition(int position) {
-        setArmPosition(position, 0.5);
+        setArmPosition(position, 1);
     }
     public void setArmPosition(int position, double power) {
         Arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
