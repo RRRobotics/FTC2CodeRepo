@@ -58,34 +58,40 @@ public class RRAutoOdometry extends LinearOpMode {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         TrajectorySequence scoreFirst = drive.trajectorySequenceBuilder(new Pose2d(8.50, -66.35, Math.toRadians(90.00)))
-                .lineToSplineHeading(new Pose2d(8.50, -33.00, Math.toRadians(90.00)))
+                .lineToSplineHeading(new Pose2d(8.52, -34.00, Math.toRadians(90.00)))
                 .build();
+
 
         drive.setPoseEstimate(scoreFirst.start());
 
         TrajectorySequence pushOthers = drive.trajectorySequenceBuilder(new Pose2d(8.50, -33.00, Math.toRadians(90.00)))
-                .UNSTABLE_addTemporalMarkerOffset(2.61,() -> {})
-                .lineToSplineHeading(new Pose2d(31.89, -36.49, Math.toRadians(90.00)))
-                .lineToSplineHeading(new Pose2d(47.00, -13.55, Math.toRadians(90.00)))
-                .lineToSplineHeading(new Pose2d(46.79, -60.38, Math.toRadians(90.00)))
-                .lineToSplineHeading(new Pose2d(49.86, -11.29, Math.toRadians(90.00)))
-                .lineToSplineHeading(new Pose2d(57.10, -12.16, Math.toRadians(90.00)))
-                .lineToSplineHeading(new Pose2d(57.10, -60.38, Math.toRadians(90.00)))
-                .lineToSplineHeading(new Pose2d(59.29, -12.60, Math.toRadians(90.00)))
-                .lineToSplineHeading(new Pose2d(63.45, -14.36, Math.toRadians(90.00)))
-                .lineToSplineHeading(new Pose2d(63.50, -60.00, Math.toRadians(90.00)))
-                .lineToSplineHeading(new Pose2d(63.50, -48.00, Math.toRadians(270.00)))
+                .setReversed(true)
+                .splineToConstantHeading(new Vector2d(45.99, -9.39), Math.toRadians(90.00))
+                .setReversed(false)
+                .lineTo(new Vector2d(46.23, -56.59))
+                .splineToConstantHeading(new Vector2d(51.29, -11.56), Math.toRadians(59.89))
+                .splineToConstantHeading(new Vector2d(56.35, -19.75), Math.toRadians(-68.89))
+                .splineToConstantHeading(new Vector2d(56.11, -56.59), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(57.55, -14.93), Math.toRadians(90.00))
+                .splineToConstantHeading(new Vector2d(62.38, -13.70), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(61.88, -56.23), Math.toRadians(90.00))
+                .splineTo(new Vector2d(51.77, -55.34), Math.toRadians(205.95))
+                .splineTo(new Vector2d(49.68, -62.70), Math.toRadians(270.00))
                 .build();
 
-        TrajectorySequence driveToScore = drive.trajectorySequenceBuilder(new Pose2d(63.50, -48.00, Math.toRadians(90.00)))
-                .UNSTABLE_addTemporalMarkerOffset(0.00,() -> {})
-                .lineToSplineHeading(new Pose2d(63.45, -63.67, Math.toRadians(270.00)))
+
+
+        TrajectorySequence driveToScore = drive.trajectorySequenceBuilder(new Pose2d(49.68, -62.70, Math.toRadians(270.00)))
                 .lineToSplineHeading(new Pose2d(3.18, -32.99, Math.toRadians(90.00)))
                 .build();
 
         TrajectorySequence returnToZone = drive.trajectorySequenceBuilder(new Pose2d(3.18, -33.00, Math.toRadians(90.00)))
-                .lineToSplineHeading(new Pose2d(63.50, -48.00, Math.toRadians(270.00)))
+                .setReversed(true)
+                .splineToLinearHeading(new Pose2d(49.68, -62.70, Math.toRadians(270.00)), Math.toRadians(270.00))
+                .setReversed(false)
                 .build();
+
+
 
 
 
@@ -100,7 +106,7 @@ public class RRAutoOdometry extends LinearOpMode {
 
         setArmPosition(MAX_POSITION);
         
-        sleep(2000);
+        sleep(1000);
         
         int count = 0;
         
@@ -137,20 +143,20 @@ public class RRAutoOdometry extends LinearOpMode {
                     break;
                 case SCORING:
                     if (waitTimer.seconds() > 1) {
-                        count++;
-                        if (count < 4) {
+//                        count++;
+//                        if (count < 4) {
                             currentState = State.RETURN;
                             drive.followTrajectorySequenceAsync(returnToZone);
                             setArmPosition(GRAB_POSITION);
-                        } else {
-                            currentState = State.IDLE;
-                            setArmPosition(0);
-                        }
+//                        } else {
+//                            currentState = State.IDLE;
+//                            setArmPosition(0);
+//                        }
                     }
                     break;
                 case RETURN:
                     if (!drive.isBusy()) {
-                        currentState = State.DRIVE_TO_SCORE;
+                        currentState = State.IDLE;
                     }
                     break;
                 case IDLE:
