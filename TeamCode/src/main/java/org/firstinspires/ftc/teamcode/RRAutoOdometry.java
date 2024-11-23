@@ -29,7 +29,7 @@ public class RRAutoOdometry extends LinearOpMode {
     Servo Pivot;
     CRServo Intake;
     private double speed_factor = 0.4;
-    private final int GRAB_POSITION = -1200;
+    private final int GRAB_POSITION = -750;
     private final int MAX_POSITION = -5700;
     private final int SCORED_POSITION = -4000;
 
@@ -58,31 +58,30 @@ public class RRAutoOdometry extends LinearOpMode {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         TrajectorySequence scoreFirst = drive.trajectorySequenceBuilder(new Pose2d(8.50, -66.35, Math.toRadians(90.00)))
-                .lineToSplineHeading(new Pose2d(8.52, -34.00, Math.toRadians(90.00)))
+                .lineToSplineHeading(new Pose2d(8.50, -33.00, Math.toRadians(90.00)))
                 .build();
 
 
         drive.setPoseEstimate(scoreFirst.start());
 
-        TrajectorySequence pushOthers = drive.trajectorySequenceBuilder(new Pose2d(8.50, -33.00, Math.toRadians(90.00)))
+        TrajectorySequence pushOthers = drive.trajectorySequenceBuilder(new Pose2d(8.50, -34.00, Math.toRadians(90.00)))
                 .setReversed(true)
-                .splineToConstantHeading(new Vector2d(45.99, -9.39), Math.toRadians(90.00))
+                .splineToConstantHeading(new Vector2d(34.70, -28.96), Math.toRadians(90.00))
                 .setReversed(false)
-                .lineTo(new Vector2d(46.23, -56.59))
-                .splineToConstantHeading(new Vector2d(51.29, -11.56), Math.toRadians(59.89))
-                .splineToConstantHeading(new Vector2d(56.35, -19.75), Math.toRadians(-68.89))
-                .splineToConstantHeading(new Vector2d(56.11, -56.59), Math.toRadians(270.00))
-                .splineToConstantHeading(new Vector2d(57.55, -14.93), Math.toRadians(90.00))
-                .splineToConstantHeading(new Vector2d(62.38, -13.70), Math.toRadians(270.00))
-                .splineToConstantHeading(new Vector2d(61.88, -56.23), Math.toRadians(90.00))
-                .splineTo(new Vector2d(51.77, -55.34), Math.toRadians(205.95))
-                .splineTo(new Vector2d(49.68, -62.70), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(36.26, -7.57), Math.toRadians(90.00))
+                .splineToConstantHeading(new Vector2d(49.00, -9.23), Math.toRadians(270.00))
+                .setReversed(true)
+                .splineToConstantHeading(new Vector2d(49.00, -54.98), Math.toRadians(-88.30))
+                .setReversed(false)
+                .splineToLinearHeading(new Pose2d(49.40, -41.02, Math.toRadians(270.00)), Math.toRadians(90.00))
+                .lineToConstantHeading(new Vector2d(48.77, -57.83))
                 .build();
 
 
 
-        TrajectorySequence driveToScore = drive.trajectorySequenceBuilder(new Pose2d(49.68, -62.70, Math.toRadians(270.00)))
-                .lineToSplineHeading(new Pose2d(3.18, -32.99, Math.toRadians(90.00)))
+
+        TrajectorySequence driveToScore = drive.trajectorySequenceBuilder(new Pose2d(49.14, -60.83, Math.toRadians(270.00)))
+                .lineToSplineHeading(new Pose2d(3.18, -33.00, Math.toRadians(90.00)))
                 .build();
 
         TrajectorySequence returnToZone = drive.trajectorySequenceBuilder(new Pose2d(3.18, -33.00, Math.toRadians(90.00)))
@@ -90,7 +89,6 @@ public class RRAutoOdometry extends LinearOpMode {
                 .splineToLinearHeading(new Pose2d(49.68, -62.70, Math.toRadians(270.00)), Math.toRadians(270.00))
                 .setReversed(false)
                 .build();
-
 
 
 
@@ -132,6 +130,7 @@ public class RRAutoOdometry extends LinearOpMode {
                     if (!drive.isBusy()) {
                         currentState = State.DRIVE_TO_SCORE;
                         drive.followTrajectorySequenceAsync(driveToScore);
+                        setArmPosition(MAX_POSITION);
                     }
                     break;
                 case DRIVE_TO_SCORE:
