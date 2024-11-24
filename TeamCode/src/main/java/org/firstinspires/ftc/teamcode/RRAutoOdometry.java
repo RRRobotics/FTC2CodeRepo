@@ -64,29 +64,34 @@ public class RRAutoOdometry extends LinearOpMode {
 
         drive.setPoseEstimate(scoreFirst.start());
 
-        TrajectorySequence pushOthers = drive.trajectorySequenceBuilder(new Pose2d(8.50, -34.00, Math.toRadians(90.00)))
+        TrajectorySequence pushOthers = drive.trajectorySequenceBuilder(new Pose2d(8.50, -33.00, Math.toRadians(90.00)))
                 .setReversed(true)
-                .splineToConstantHeading(new Vector2d(34.70, -28.96), Math.toRadians(90.00))
+                .splineToConstantHeading(new Vector2d(33, -33), Math.toRadians(90.00))
                 .setReversed(false)
-                .splineToConstantHeading(new Vector2d(36.26, -7.57), Math.toRadians(90.00))
-                .splineToConstantHeading(new Vector2d(49.00, -9.23), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(34, -15.57), Math.toRadians(90.00))
+                .splineToConstantHeading(new Vector2d(47.00, -9.23), Math.toRadians(270.00))
                 .setReversed(true)
-                .splineToConstantHeading(new Vector2d(49.00, -54.98), Math.toRadians(-88.30))
+                .splineToConstantHeading(new Vector2d(47.00, -56), Math.toRadians(-88.30))
                 .setReversed(false)
-                .splineToLinearHeading(new Pose2d(49.40, -41.02, Math.toRadians(270.00)), Math.toRadians(90.00))
-                .lineToConstantHeading(new Vector2d(48.77, -57.83))
+                .splineToLinearHeading(new Pose2d(49.40, -41.02, Math.toRadians(90.00)), Math.toRadians(90.00))
+                .turn(Math.toRadians(180))
+                .lineToConstantHeading(new Vector2d(49.40, -68))
+
                 .build();
 
 
 
 
-        TrajectorySequence driveToScore = drive.trajectorySequenceBuilder(new Pose2d(49.14, -60.83, Math.toRadians(270.00)))
-                .lineToSplineHeading(new Pose2d(3.18, -33.00, Math.toRadians(90.00)))
+        TrajectorySequence driveToScore = drive.trajectorySequenceBuilder(new Pose2d(49.40, -68, Math.toRadians(270.00)))
+                .setReversed(true)
+                .splineToLinearHeading(new Pose2d(1.5, -36.00, Math.toRadians(90.00)), Math.toRadians(90.00))
+                .setReversed(false)
                 .build();
 
-        TrajectorySequence returnToZone = drive.trajectorySequenceBuilder(new Pose2d(3.18, -33.00, Math.toRadians(90.00)))
+
+        TrajectorySequence returnToZone = drive.trajectorySequenceBuilder(new Pose2d(1.5, -36.00, Math.toRadians(90.00)))
                 .setReversed(true)
-                .splineToLinearHeading(new Pose2d(49.68, -62.70, Math.toRadians(270.00)), Math.toRadians(270.00))
+                .splineToLinearHeading(new Pose2d(49.40, -68, Math.toRadians(270.00)), Math.toRadians(270.00))
                 .setReversed(false)
                 .build();
 
@@ -153,6 +158,7 @@ public class RRAutoOdometry extends LinearOpMode {
 //                        }
                     }
                     break;
+                    //for 60 point: return, drive to score 2, scoring
                 case RETURN:
                     if (!drive.isBusy()) {
                         currentState = State.IDLE;
