@@ -17,15 +17,14 @@ public class RRTeleOp extends OpMode {
     DcMotor BL;
     DcMotor Arm;
     Servo Extend;
-    Servo Pivot;
-    CRServo Intake;
+    Servo pitch;
+    CRServo intakeR;
+    CRServo intakeL;
     private double speed_factor = 0.4;
     private int offset;
     private final int GRAB_POSITION = -1200;
     private final int MAX_POSITION = -5700;
     private final int SCORED_POSITION = -4000;
-
-    //testcommit
 
 
     @Override
@@ -36,8 +35,9 @@ public class RRTeleOp extends OpMode {
         BR = hardwareMap.get(DcMotor.class, "BR");
         Arm = hardwareMap.get(DcMotor.class, "Arm");
         Extend = hardwareMap.get(Servo.class, "Extend");
-        Pivot = hardwareMap.get(Servo.class, "Pivot");
-        Intake = hardwareMap.get(CRServo.class, "Intake");
+        pitch = hardwareMap.get(Servo.class, "pitch");
+        intakeR = hardwareMap.get(CRServo.class, "intakeR");
+        intakeL = hardwareMap.get(CRServo.class, "intakeL");
         telemetry.addData("initialization:", "is a success");
         telemetry.update();
         Arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -110,21 +110,24 @@ public class RRTeleOp extends OpMode {
             Extend.setPosition(0);
         }
         if (gamepad1.dpad_up) {
-            Pivot.setPosition(0);
+            pitch.setPosition(0);
         }
         if (gamepad1.dpad_down) {
-            Pivot.setPosition(0.5);
+            pitch.setPosition(1);
         }
 
         // Spinny intake
         if (gamepad1.right_bumper) {
-            Intake.setPower(-1);
+            intakeR.setPower(-1);
+            intakeL.setPower(1);
         }
         if (gamepad1.left_bumper) {
-            Intake.setPower(1);
+            intakeR.setPower(1);
+            intakeL.setPower(-1);
         }
         if (!(gamepad1.left_bumper || gamepad1.right_bumper)) {
-            Intake.setPower(0);
+            intakeR.setPower(0);
+            intakeL.setPower(0);
         }
     }
 

@@ -5,6 +5,7 @@ import static com.qualcomm.robotcore.hardware.Servo.MAX_POSITION;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.acmerobotics.roadrunner.trajectory.constraints.MecanumVelocityConstraint;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -29,12 +30,12 @@ public class RRAutoOdometry extends LinearOpMode {
     Servo Pivot;
     CRServo Intake;
     private double speed_factor = 0.4;
-    private final int GRAB_POSITION = -750;
+    private final int GRAB_POSITION = -500;
     private final int MAX_POSITION = -5700;
     private final int SCORED_POSITION = -4000;
 
     enum State {
-        IDLE, SCORE_FIRST, SCORING_FIRST, PUSH_OTHERS, SCORING, DRIVE_TO_SCORE_FIRST, DRIVE_TO_SCORE_SECOND, SCORING_SECOND, RETURN
+        IDLE, SCORE_FIRST, SCORING_FIRST, PUSH_OTHERS, SCORING, DRIVE_TO_SCORE_FIRST, DRIVE_TO_SCORE_SECOND, SCORING_SECOND, PARK, RETURN
     }
 
     State currentState = State.IDLE;
@@ -58,46 +59,53 @@ public class RRAutoOdometry extends LinearOpMode {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         TrajectorySequence scoreFirst = drive.trajectorySequenceBuilder(new Pose2d(8.50, -66.35, Math.toRadians(90.00)))
-                .lineToSplineHeading(new Pose2d(8.50, -34.00, Math.toRadians(90.00)))
+                .lineToSplineHeading(new Pose2d(8.50, -36.00, Math.toRadians(90.00)))
                 .build();
 
 
         drive.setPoseEstimate(scoreFirst.start());
 
-        TrajectorySequence pushOthers = drive.trajectorySequenceBuilder(new Pose2d(8.50, -34.00, Math.toRadians(90.00)))
+        TrajectorySequence pushOthers = drive.trajectorySequenceBuilder(new Pose2d(8.50, -36.00, Math.toRadians(90.00)))
                 .setReversed(true)
                 .splineToLinearHeading(new Pose2d(36, -28.96, Math.toRadians(90.00)), Math.toRadians(90.00))
-                .splineToLinearHeading(new Pose2d(36, -15, Math.toRadians(90.00)), Math.toRadians(90.00))
-                .splineToConstantHeading(new Vector2d(47.00, -15), Math.toRadians(270.00))
-                .splineToConstantHeading(new Vector2d(47.00, -56), Math.toRadians(-88.30))
+                .splineToLinearHeading(new Pose2d(36, -23, Math.toRadians(90.00)), Math.toRadians(90.00))
+                .splineToConstantHeading(new Vector2d(49.00, -23), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(49.00, -56), Math.toRadians(-88.30))
                 .setReversed(false)
-                .splineToConstantHeading(new Vector2d(44.12, -15), Math.toRadians(90.00))
-                .splineToConstantHeading(new Vector2d(55, -15), Math.toRadians(270.00))
-                .splineToConstantHeading(new Vector2d(55, -55.03), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(40, -23), Math.toRadians(90.00))
+                .splineToConstantHeading(new Vector2d(59, -23), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(59, -55.03), Math.toRadians(270.00))
                 .splineToLinearHeading(new Pose2d(49.40, -45.84, Math.toRadians(270)), Math.toRadians(225))
-                .splineToLinearHeading(new Pose2d(49.40, -63.00, Math.toRadians(270.00)), Math.toRadians(270))
+                .splineToLinearHeading(new Pose2d(49.40, -60.00, Math.toRadians(270.00)), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(49.40, -67.00), Math.toRadians(270))
                 .build();
 
 
 
 
-        TrajectorySequence driveToScore = drive.trajectorySequenceBuilder(new Pose2d(49.40, -68, Math.toRadians(270.00)))
+        TrajectorySequence driveToScore = drive.trajectorySequenceBuilder(new Pose2d(49.40, -67, Math.toRadians(270.00)))
                 .setReversed(true)
-                .splineToLinearHeading(new Pose2d(1.5, -40.00, Math.toRadians(90.00)), Math.toRadians(90.00))
+                .splineToLinearHeading(new Pose2d(1.5, -41.00, Math.toRadians(90.00)), Math.toRadians(90.00))
                 .setReversed(false)
                 .build();
 
-        TrajectorySequence driveToScoreSecond = drive.trajectorySequenceBuilder(new Pose2d(49.40, -68, Math.toRadians(270.00)))
+        TrajectorySequence driveToScoreSecond = drive.trajectorySequenceBuilder(new Pose2d(49.40, -67, Math.toRadians(270.00)))
                 .setReversed(true)
-                .splineToLinearHeading(new Pose2d(0, -40.00, Math.toRadians(90.00)), Math.toRadians(90.00))
+                .splineToLinearHeading(new Pose2d(-1, -42.00, Math.toRadians(90.00)), Math.toRadians(90.00))
                 .setReversed(false)
                 .build();
 
 
-        TrajectorySequence returnToZone = drive.trajectorySequenceBuilder(new Pose2d(1.5, -38.00, Math.toRadians(90.00)))
+        TrajectorySequence returnToZone = drive.trajectorySequenceBuilder(new Pose2d(1.5, -41.00, Math.toRadians(90.00)))
                 .setReversed(true)
-                .splineToLinearHeading(new Pose2d(49.40, -68, Math.toRadians(270.00)), Math.toRadians(270.00))
+                .splineToLinearHeading(new Pose2d(49.40, -60, Math.toRadians(270.00)), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(49.40, -65), Math.toRadians(270))
                 .setReversed(false)
+                .build();
+
+        TrajectorySequence park = drive.trajectorySequenceBuilder(new Pose2d(-1, -42.00, Math.toRadians(90.00)))
+                .lineToConstantHeading(new Vector2d(49.40, -65))
+                .setVelConstraint(new MecanumVelocityConstraint(1000, 13.24))
                 .build();
 
 
@@ -125,12 +133,11 @@ public class RRAutoOdometry extends LinearOpMode {
                 case SCORE_FIRST:
                     if (!drive.isBusy()) {
                         currentState = State.SCORING_FIRST;
-                        waitTimer.reset();
                         setArmPosition(SCORED_POSITION);
                     }
                     break;
                 case SCORING_FIRST:
-                    if (waitTimer.seconds() > 1) {
+                    if (atArmPosition(SCORED_POSITION)) {
                         currentState = State.PUSH_OTHERS;
                         drive.followTrajectorySequenceAsync(pushOthers);
                         setArmPosition(GRAB_POSITION);
@@ -147,11 +154,10 @@ public class RRAutoOdometry extends LinearOpMode {
                     if (!drive.isBusy()) {
                         currentState = State.SCORING;
                         setArmPosition(SCORED_POSITION);
-                        waitTimer.reset();
                     }
                     break;
                 case SCORING:
-                    if (waitTimer.seconds() > 0.7) {
+                    if (atArmPosition(SCORED_POSITION)) {
 //                        count++;
 //                        if (count < 4) {
                             currentState = State.RETURN;
@@ -175,11 +181,17 @@ public class RRAutoOdometry extends LinearOpMode {
                     if (!drive.isBusy()) {
                         currentState = State.SCORING_SECOND;
                         setArmPosition(GRAB_POSITION);
-                        waitTimer.reset();
                     }
                     break;
                 case SCORING_SECOND:
-                    if (waitTimer.seconds() > 0.8) {
+                    if (atArmPosition(SCORED_POSITION)) {
+                        currentState = State.PARK;
+                        drive.followTrajectorySequenceAsync(park);
+                        setArmPosition(0);
+                    }
+                    break;
+                case PARK:
+                    if (!drive.isBusy()) {
                         currentState = State.IDLE;
                     }
                 case IDLE:
@@ -199,6 +211,10 @@ public class RRAutoOdometry extends LinearOpMode {
         Arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         Arm.setPower(power);
         Arm.setTargetPosition(position);
+    }
+
+    public boolean atArmPosition(int target) {
+        return Math.abs(target - Arm.getCurrentPosition()) < 10;
     }
 
 }
