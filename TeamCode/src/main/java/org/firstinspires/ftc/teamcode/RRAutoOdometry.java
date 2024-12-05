@@ -25,7 +25,7 @@ public class RRAutoOdometry extends LinearOpMode {
     DcMotor FL;
     DcMotor BR;
     DcMotor BL;
-    DcMotor Arm;
+    DcMotor arm;
     Servo Extend;
     Servo Pivot;
     CRServo Intake;
@@ -51,14 +51,14 @@ public class RRAutoOdometry extends LinearOpMode {
         FR = hardwareMap.get(DcMotor.class, "FR");
         BL = hardwareMap.get(DcMotor.class, "BL");
         BR = hardwareMap.get(DcMotor.class, "BR");
-        Arm = hardwareMap.get(DcMotor.class, "Arm");
+        arm = hardwareMap.get(DcMotor.class, "arm");
         Extend = hardwareMap.get(Servo.class, "Extend");
         Pivot = hardwareMap.get(Servo.class, "Pivot");
         Intake = hardwareMap.get(CRServo.class, "Intake");
         telemetry.addData("initialization:", "is a success");
         telemetry.update();
-        Arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        Arm.setTargetPosition(0);
+        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        arm.setTargetPosition(0);
         endPose = new Pose2d();
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
@@ -211,13 +211,13 @@ public class RRAutoOdometry extends LinearOpMode {
         setArmPosition(position, 1);
     }
     public void setArmPosition(int position, double power) {
-        Arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        Arm.setPower(power);
-        Arm.setTargetPosition(position);
+        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        arm.setPower(power);
+        arm.setTargetPosition(position);
     }
 
     public boolean atArmPosition(int target) {
-        return Math.abs(target - Arm.getCurrentPosition()) < 10;
+        return Math.abs(target - arm.getCurrentPosition()) < 10;
     }
 
 }

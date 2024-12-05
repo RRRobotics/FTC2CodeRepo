@@ -2,12 +2,13 @@ package org.firstinspires.ftc.teamcode;
 
 import static java.lang.Thread.sleep;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
-
+@Disabled
 @TeleOp(name = "RRTeleOp")
 public class RRTeleOp extends OpMode {
 
@@ -22,14 +23,9 @@ public class RRTeleOp extends OpMode {
     CRServo intakeL;
     private double speed_factor = 0.4;
     private int offset;
-
-    //This is the old motor
     private final int GRAB_POSITION = -219;
-    //private final int GRAB_POSITION = -1200;
     private final int MAX_POSITION = -2092;
-    //private final int MAX_POSITION = -5700;
     private final int SCORED_POSITION = -1324;
-    //private final int SCORED_POSITION = -4000;
 
 
     @Override
@@ -82,7 +78,6 @@ public class RRTeleOp extends OpMode {
             arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             arm.setTargetPosition(position + 10);
             offset -= target - arm.getTargetPosition();
-
         }
         if (gamepad1.touchpad) {
             int temp = offset;
