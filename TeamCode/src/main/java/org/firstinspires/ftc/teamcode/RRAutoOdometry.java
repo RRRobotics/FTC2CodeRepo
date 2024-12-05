@@ -30,9 +30,13 @@ public class RRAutoOdometry extends LinearOpMode {
     Servo Pivot;
     CRServo Intake;
     private double speed_factor = 0.4;
-    private final int GRAB_POSITION = -500;
-    private final int MAX_POSITION = -5700;
-    private final int SCORED_POSITION = -4000;
+    private final int GRAB_POSITION = -219;
+
+    private final int MAX_POSITION = -2092;
+
+    private final int SCORED_POSITION = -1324;
+
+    public static Pose2d endPose;
 
     enum State {
         IDLE, SCORE_FIRST, SCORING_FIRST, PUSH_OTHERS, SCORING, DRIVE_TO_SCORE_FIRST, DRIVE_TO_SCORE_SECOND, SCORING_SECOND, PARK, RETURN
@@ -55,6 +59,7 @@ public class RRAutoOdometry extends LinearOpMode {
         telemetry.update();
         Arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         Arm.setTargetPosition(0);
+        endPose = new Pose2d();
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
@@ -120,14 +125,11 @@ public class RRAutoOdometry extends LinearOpMode {
         drive.followTrajectorySequenceAsync(scoreFirst);
         currentState = State.SCORE_FIRST;
 
+
         setArmPosition(MAX_POSITION);
-        
-        sleep(1000);
-        
-        int count = 0;
+
         
         while(opModeIsActive() && !isStopRequested()) {
-
 
             switch(currentState) {
                 case SCORE_FIRST:
@@ -201,6 +203,7 @@ public class RRAutoOdometry extends LinearOpMode {
             drive.update();
 
         }
+        endPose = drive.getPoseEstimate();
 
     }
 

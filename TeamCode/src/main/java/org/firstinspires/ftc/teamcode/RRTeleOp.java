@@ -15,16 +15,21 @@ public class RRTeleOp extends OpMode {
     DcMotor FL;
     DcMotor BR;
     DcMotor BL;
-    DcMotor Arm;
-    Servo Extend;
+    DcMotor arm;
+    DcMotor extend;
     Servo pitch;
     CRServo intakeR;
     CRServo intakeL;
     private double speed_factor = 0.4;
     private int offset;
-    private final int GRAB_POSITION = -1200;
-    private final int MAX_POSITION = -5700;
-    private final int SCORED_POSITION = -4000;
+
+    //This is the old motor
+    private final int GRAB_POSITION = -219;
+    //private final int GRAB_POSITION = -1200;
+    private final int MAX_POSITION = -2092;
+    //private final int MAX_POSITION = -5700;
+    private final int SCORED_POSITION = -1324;
+    //private final int SCORED_POSITION = -4000;
 
 
     @Override
@@ -33,23 +38,24 @@ public class RRTeleOp extends OpMode {
         FR = hardwareMap.get(DcMotor.class, "FR");
         BL = hardwareMap.get(DcMotor.class, "BL");
         BR = hardwareMap.get(DcMotor.class, "BR");
-        Arm = hardwareMap.get(DcMotor.class, "Arm");
-        Extend = hardwareMap.get(Servo.class, "Extend");
+        arm = hardwareMap.get(DcMotor.class, "arm");
+        extend = hardwareMap.get(DcMotor.class, "extend");
         pitch = hardwareMap.get(Servo.class, "pitch");
         intakeR = hardwareMap.get(CRServo.class, "intakeR");
         intakeL = hardwareMap.get(CRServo.class, "intakeL");
         telemetry.addData("initialization:", "is a success");
         telemetry.update();
-        Arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        Arm.setTargetPosition(0);
+        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        arm.setTargetPosition(0);
+        extend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         offset = 0;
     }
 
     @Override
     public void loop() {
         telemetry.addData("speed_factor:", speed_factor);
-        telemetry.addData("arm position", Arm.getCurrentPosition());
-        telemetry.addData("arm target", Arm.getTargetPosition());
+        telemetry.addData("arm position", arm.getCurrentPosition());
+        telemetry.addData("extend", extend.getCurrentPosition());
         telemetry.addData("offset", offset);
         telemetry.update();
         if (gamepad1.right_trigger > 0.5)
@@ -64,23 +70,23 @@ public class RRTeleOp extends OpMode {
         BR.setPower(-(gamepad1.left_stick_y * speed_factor) - (gamepad1.right_stick_x * speed_factor) + (gamepad1.left_stick_x * 0.6));
 
         if (gamepad1.share && gamepad1.triangle) {
-            int position = Arm.getCurrentPosition();
-            int target = Arm.getTargetPosition();
-            Arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            Arm.setTargetPosition(position - 10);
-            offset -= target - Arm.getTargetPosition();
+            int position = arm.getCurrentPosition();
+            int target = arm.getTargetPosition();
+            arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            arm.setTargetPosition(position - 10);
+            offset -= target - arm.getTargetPosition();
         }
         if (gamepad1.share && gamepad1.cross) {
-            int position = Arm.getCurrentPosition();
-            int target = Arm.getTargetPosition();
-            Arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            Arm.setTargetPosition(position + 10);
-            offset -= target - Arm.getTargetPosition();
+            int position = arm.getCurrentPosition();
+            int target = arm.getTargetPosition();
+            arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            arm.setTargetPosition(position + 10);
+            offset -= target - arm.getTargetPosition();
 
         }
         if (gamepad1.touchpad) {
             int temp = offset;
-            Arm.setTargetPosition(Arm.getTargetPosition() - temp);
+            arm.setTargetPosition(arm.getTargetPosition() - temp);
             offset = 0;
         }
 
@@ -102,12 +108,13 @@ public class RRTeleOp extends OpMode {
             setArmPosition(SCORED_POSITION);
         }
 
-        //Floor Pickup
         if (gamepad1.dpad_right) {
-            Extend.setPosition(0.3);
+            extend.setTargetPosition(-2000);
+            extend.setPower(1);
+            extend.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
         if (gamepad1.dpad_left) {
-            Extend.setPosition(0);
+            extend.setTargetPosition(0);
         }
         if (gamepad1.dpad_up) {
             pitch.setPosition(0);
@@ -135,8 +142,8 @@ public class RRTeleOp extends OpMode {
         setArmPosition(position, 1);
     }
     public void setArmPosition(int position, double power) {
-        Arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        Arm.setPower(power);
-        Arm.setTargetPosition(position + offset);
+        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        arm.setPower(power);
+        arm.setTargetPosition(position + offset);
     }
 }
