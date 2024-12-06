@@ -96,7 +96,7 @@ public class RRAutoOdometry extends LinearOpMode {
 
         TrajectorySequence driveToScoreSecond = drive.trajectorySequenceBuilder(new Pose2d(49.40, -67, Math.toRadians(270.00)))
                 .setReversed(true)
-                .splineToLinearHeading(new Pose2d(-1, -42.00, Math.toRadians(90.00)), Math.toRadians(90.00))
+                .splineToLinearHeading(new Pose2d(-1, -41.00, Math.toRadians(90.00)), Math.toRadians(90.00))
                 .setReversed(false)
                 .build();
 
@@ -108,7 +108,7 @@ public class RRAutoOdometry extends LinearOpMode {
                 .setReversed(false)
                 .build();
 
-        TrajectorySequence park = drive.trajectorySequenceBuilder(new Pose2d(-1, -42.00, Math.toRadians(90.00)))
+        TrajectorySequence park = drive.trajectorySequenceBuilder(new Pose2d(-1, -41.00, Math.toRadians(90.00)))
                 .lineToConstantHeading(new Vector2d(49.40, -65))
                 .setVelConstraint(new MecanumVelocityConstraint(1000, 13.24))
                 .build();

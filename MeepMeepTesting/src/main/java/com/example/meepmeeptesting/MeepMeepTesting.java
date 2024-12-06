@@ -20,7 +20,7 @@ public class MeepMeepTesting {
                         .setReversed(true)
                         .splineToLinearHeading(new Pose2d(36, -28.96, Math.toRadians(90.00)), Math.toRadians(90.00))
                         .splineToLinearHeading(new Pose2d(36, -15, Math.toRadians(90.00)), Math.toRadians(90.00))
-                        .splineToConstantHeading(new Vector2d(47.00, -15), Math.toRadians(270.00))
+                        .splineToConstantHeading(new Vector2d(51.00, -19), Math.toRadians(270.00))
                         .splineToConstantHeading(new Vector2d(47.00, -56), Math.toRadians(-88.30))
                         .setReversed(false)
                         .splineToConstantHeading(new Vector2d(44.12, -15), Math.toRadians(90.00))
