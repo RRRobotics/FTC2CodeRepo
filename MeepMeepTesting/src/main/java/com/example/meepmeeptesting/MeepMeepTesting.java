@@ -2,6 +2,7 @@ package com.example.meepmeeptesting;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.acmerobotics.roadrunner.trajectory.constraints.MecanumVelocityConstraint;
 
 import org.rowlandhall.meepmeep.MeepMeep;
 import org.rowlandhall.meepmeep.roadrunner.DefaultBotBuilder;
@@ -13,39 +14,29 @@ public class MeepMeepTesting {
 
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
-                .setConstraints(50, 45, Math.toRadians(180), Math.toRadians(222), 13.24)
+                .setConstraints(50, 50, Math.toRadians(300), Math.toRadians(250), 13.24)
                 .followTrajectorySequence(drive -> drive.trajectorySequenceBuilder(new Pose2d(8.50, -66.35, Math.toRadians(90.00)))
-                        .lineToSplineHeading(new Pose2d(8.50, -34.00, Math.toRadians(90.00)))
+                        .lineToSplineHeading(new Pose2d(8.50, -36.00, Math.toRadians(90.00)))
 
-                        .setReversed(true)
-                        .splineToLinearHeading(new Pose2d(36, -28.96, Math.toRadians(90.00)), Math.toRadians(90.00))
-                        .splineToLinearHeading(new Pose2d(36, -15, Math.toRadians(90.00)), Math.toRadians(90.00))
-                        .splineToConstantHeading(new Vector2d(51.00, -19), Math.toRadians(270.00))
-                        .splineToConstantHeading(new Vector2d(47.00, -56), Math.toRadians(-88.30))
-                        .setReversed(false)
-                        .splineToConstantHeading(new Vector2d(44.12, -15), Math.toRadians(90.00))
-                        .splineToConstantHeading(new Vector2d(55, -15), Math.toRadians(270.00))
-                        .splineToConstantHeading(new Vector2d(55, -55.03), Math.toRadians(270.00))
-                        .splineToLinearHeading(new Pose2d(49.40, -45.84, Math.toRadians(270)), Math.toRadians(225))
-                        .splineToLinearHeading(new Pose2d(49.40, -63.00, Math.toRadians(270.00)), Math.toRadians(270))
+                        .lineToLinearHeading(new Pose2d(38.93, -40.00, Math.toRadians(70.00)))
+                        .turn(-Math.toRadians(140))
+                        .lineToLinearHeading(new Pose2d(48.59, -40.00, Math.toRadians(70)))
+                        .turn(-Math.toRadians(140))
+                        .lineToLinearHeading(new Pose2d(57.00, -40.00, Math.toRadians(70)))
+                        .turn(-Math.toRadians(140))
+                        .splineToLinearHeading(new Pose2d(49.40, -67, Math.toRadians(270)), Math.toRadians(270))
 
-                        .setReversed(true)
-                        .splineToLinearHeading(new Pose2d(1.5, -40.00, Math.toRadians(90.00)), Math.toRadians(90.00))
-                        .setReversed(false)
+                        .lineToLinearHeading(new Pose2d(1.5, -41.00, Math.toRadians(90.00)))
 
-                        .setReversed(true)
-                        .splineToLinearHeading(new Pose2d(49.40, -60, Math.toRadians(270.00)),Math.toRadians(270.00))
-                        .splineToConstantHeading(new Vector2d(49.4, -68), Math.toRadians(270))
-                        .setReversed(false)
+                        .lineToSplineHeading(new Pose2d(33.33, -44.52, Math.toRadians(-10)))
+                        .splineToSplineHeading(new Pose2d(49.40, -65, Math.toRadians(270)), Math.toRadians(270.00))
 
-                        .setReversed(true)
-                        .splineToLinearHeading(new Pose2d(0, -40.00, Math.toRadians(90.00)), Math.toRadians(90.00))
+                        .lineToLinearHeading(new Pose2d(1.5, -41.00, Math.toRadians(90.00)))
 
-                        .setReversed(false)
+                        .lineToSplineHeading(new Pose2d(33.33, -44.52, Math.toRadians(-10)))
+                        .splineToSplineHeading(new Pose2d(49.40, -65, Math.toRadians(270)), Math.toRadians(270.00))
 
-                        .setReversed(true)
-                        .splineToLinearHeading(new Pose2d(49.40, -68, Math.toRadians(270.00)), Math.toRadians(270.00))
-                        .setReversed(false)
+                        .lineToLinearHeading(new Pose2d(1.5, -41.00, Math.toRadians(90.00)))
 
                         .build());
 
