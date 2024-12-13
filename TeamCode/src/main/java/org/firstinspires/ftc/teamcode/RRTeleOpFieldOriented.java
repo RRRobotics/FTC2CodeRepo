@@ -21,7 +21,7 @@ import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 
 @TeleOp(group = "advanced")
 public class RRTeleOpFieldOriented extends LinearOpMode {
-    DcMotor arm, extend;
+    DcMotor arm, extend, flip;
     Servo pitch, heading;
     CRServo intakeR, intakeL;
 
@@ -31,6 +31,8 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
     private final int MAX_POSITION = -2092;
     private final int SCORED_POSITION = -1324;
     private final int MAX_EXTEND = -2160;
+    private final int FLIP_SCORE = 0;
+    private final int FLIP_INTAKE = 0;
     enum IntakeMode {
         OFF, NEAR, LEFT, RIGHT
     }
@@ -45,6 +47,7 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         arm = hardwareMap.get(DcMotor.class, "arm");
         extend = hardwareMap.get(DcMotor.class, "extend");
+        flip = hardwareMap.get(DcMotor.class, "flip");
         pitch = hardwareMap.get(Servo.class, "pitch");
         heading = hardwareMap.get(Servo.class, "heading");
         intakeR = hardwareMap.get(CRServo.class, "intakeR");
@@ -54,6 +57,9 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         extend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         extend.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        flip.setTargetPosition(0);
+        flip.setPower(1);
+        flip.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         offset = 0;
 
@@ -77,6 +83,7 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
             telemetry.addData("extend", extend.getCurrentPosition());
             telemetry.addData("heading position", heading.getPosition());
             telemetry.addData("state", state);
+            telemetry.addData("flip", flip.getCurrentPosition());
             telemetry.update();
             // Read pose
             Pose2d poseEstimate = drive.getPoseEstimate();
@@ -169,10 +176,12 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
                     //Floor position - Zero
                 } if (gamepad1.triangle && !gamepad1.share) {
                     setArmPosition(MAX_POSITION);
+                    flip.setTargetPosition(FLIP_SCORE);
                     //Raised - ready to score
                 } if (gamepad1.square) {
                     //Pickup position
                     setArmPosition(GRAB_POSITION);
+                    flip.setTargetPosition(FLIP_INTAKE);
                 } if (gamepad1.circle) {
                     //Place - Pull down
                     setArmPosition(SCORED_POSITION);
