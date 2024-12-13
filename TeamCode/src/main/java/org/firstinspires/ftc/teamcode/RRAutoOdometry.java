@@ -29,17 +29,15 @@ public class RRAutoOdometry extends LinearOpMode {
     Servo Extend;
     Servo Pivot;
     CRServo Intake;
-    private double speed_factor = 0.4;
-    private final int GRAB_POSITION = -219;
-
+    private final int GRAB_POSITION = -135;
     private final int MAX_POSITION = -2092;
+    private final int SCORED_POSITION = -1400;
 
-    private final int SCORED_POSITION = -1324;
 
     public static Pose2d endPose;
 
     enum State {
-        IDLE, SCORE_FIRST, SCORING_FIRST, PUSH_OTHERS, SCORING, DRIVE_TO_SCORE, PARK, RETURN
+        IDLE, SCORE_FIRST, SCORING_FIRST, PUSH_OTHERS, SCORING_SECOND, SCORING, DRIVE_TO_SCORE_FIRST, DRIVE_TO_SCORE_SECOND, PARK, RETURN
     }
 
     State currentState = State.IDLE;
@@ -122,23 +120,16 @@ public class RRAutoOdometry extends LinearOpMode {
                         currentState = State.PUSH_OTHERS;
                         drive.followTrajectorySequenceAsync(pushOthers);
                         setArmPosition(GRAB_POSITION);
-                        samplesScored++;
                     }
                     break;
                 case PUSH_OTHERS:
-                    // if robot y greater than -45
-                        // arm position = cos(heading)*horizontal distance from samples
-                        //                                 ^ in motor ticks, not inches
-                        // intake head position = heading (translated to 0-1)
-                    // else
-                        // arm position = 0 (fast)
                     if (!drive.isBusy()) {
-                        currentState = State.DRIVE_TO_SCORE;
+                        currentState = State.DRIVE_TO_SCORE_FIRST;
                         drive.followTrajectorySequenceAsync(driveToScore);
                         setArmPosition(MAX_POSITION);
                     }
                     break;
-                case DRIVE_TO_SCORE:
+                case DRIVE_TO_SCORE_FIRST:
                     if (!drive.isBusy()) {
                         currentState = State.SCORING;
                         setArmPosition(SCORED_POSITION);
@@ -146,32 +137,44 @@ public class RRAutoOdometry extends LinearOpMode {
                     break;
                 case SCORING:
                     if (atArmPosition(SCORED_POSITION)) {
-                        samplesScored++;
-                        if (samplesScored == 4) {
-                            currentState = State.PARK;
-                            drive.followTrajectorySequenceAsync(park);
-                            setArmPosition(0);
-                        } else {
-                            currentState = State.RETURN;
-                            drive.followTrajectorySequenceAsync(returnToZone);
-                            setArmPosition(GRAB_POSITION);
-                        }
+//                        count++;
+//                        if (count < 4) {
+                        currentState = State.RETURN;
+                        drive.followTrajectorySequenceAsync(returnToZone);
+                        setArmPosition(GRAB_POSITION);
+//                        } else {
+//                            currentState = State.IDLE;
+//                            setArmPosition(0);
+//                        }
                     }
                     break;
+                //for 60 point: return, drive to score 2, scoring
                 case RETURN:
                     if (!drive.isBusy()) {
-                        currentState = State.DRIVE_TO_SCORE;
+                        currentState = State.DRIVE_TO_SCORE_SECOND;
                         drive.followTrajectorySequenceAsync(driveToScore);
+                        setArmPosition(MAX_POSITION);
+                    }
+                    break;
+                case DRIVE_TO_SCORE_SECOND:
+                    if (!drive.isBusy()) {
+                        currentState = State.SCORING_SECOND;
+                        setArmPosition(GRAB_POSITION);
+                    }
+                    break;
+                case SCORING_SECOND:
+                    if (atArmPosition(SCORED_POSITION)) {
+                        currentState = State.PARK;
+                        drive.followTrajectorySequenceAsync(park);
+                        setArmPosition(0);
                     }
                     break;
                 case PARK:
                     if (!drive.isBusy()) {
                         currentState = State.IDLE;
                     }
-                    break;
                 case IDLE:
                     break;
-
             }
 
             drive.update();

@@ -25,7 +25,7 @@ public class RRAuto2 extends LinearOpMode {
     DcMotor FL;
     DcMotor BR;
     DcMotor BL;
-    DcMotor arm;
+    DcMotor arm, extend;
     Servo Extend;
     Servo Pivot;
     CRServo Intake;
@@ -39,7 +39,7 @@ public class RRAuto2 extends LinearOpMode {
     public static Pose2d endPose;
 
     enum State {
-        IDLE, SCORE_FIRST, SCORING_FIRST, PUSH_OTHERS, SCORING, DRIVE_TO_SCORE_FIRST, DRIVE_TO_SCORE_SECOND, SCORING_SECOND, PARK, RETURN
+        IDLE, SCORE_FIRST, SCORING_FIRST, PUSH_OTHERS, SCORING, DRIVE_TO_SCORE, PARK, RETURN
     }
 
     State currentState = State.IDLE;
@@ -52,16 +52,21 @@ public class RRAuto2 extends LinearOpMode {
         BL = hardwareMap.get(DcMotor.class, "BL");
         BR = hardwareMap.get(DcMotor.class, "BR");
         arm = hardwareMap.get(DcMotor.class, "arm");
-        Extend = hardwareMap.get(Servo.class, "Extend");
+        extend = hardwareMap.get(DcMotor.class, "extend");
         Pivot = hardwareMap.get(Servo.class, "Pivot");
         Intake = hardwareMap.get(CRServo.class, "Intake");
         telemetry.addData("initialization:", "is a success");
         telemetry.update();
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         arm.setTargetPosition(0);
+        extend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        extend.setTargetPosition(0);
         endPose = new Pose2d();
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
+
+        Pose2d pickup = new Pose2d(40.00, -63, Math.toRadians(270));
+
 
         TrajectorySequence scoreFirst = drive.trajectorySequenceBuilder(new Pose2d(8.50, -66.35, Math.toRadians(90.00)))
                 .lineToSplineHeading(new Pose2d(8.50, -36.00, Math.toRadians(90.00)))
@@ -70,21 +75,24 @@ public class RRAuto2 extends LinearOpMode {
         drive.setPoseEstimate(scoreFirst.start());
 
         TrajectorySequence pushOthers = drive.trajectorySequenceBuilder(new Pose2d(8.5, -36, Math.toRadians(90)))
-                .lineToLinearHeading(new Pose2d(38.93, -45.00, Math.toRadians(70.00)))
+                .lineToLinearHeading(new Pose2d(33.00, -50.00, Math.toRadians(70.00)))
                 .turn(-Math.toRadians(140))
-                .lineToLinearHeading(new Pose2d(48.59, -45.00, Math.toRadians(70)))
+                .lineToLinearHeading(new Pose2d(43.00, -50.00, Math.toRadians(70)))
                 .turn(-Math.toRadians(140))
-                .lineToLinearHeading(new Pose2d(57, -45.00, Math.toRadians(70)))
+                .lineToLinearHeading(new Pose2d(53.00, -50.00, Math.toRadians(70)))
+                .turn(-Math.toRadians(140))
+                .splineToLinearHeading(new Pose2d(40.00, -65, Math.toRadians(270)), Math.toRadians(270))
+
                 .build();
 
-        TrajectorySequence driveToScore = drive.trajectorySequenceBuilder(new Pose2d(49.40, -67, Math.toRadians(270.00)))
-                .lineToLinearHeading(new Pose2d(1.5, -41.00, Math.toRadians(90.00)))
+        TrajectorySequence driveToScore = drive.trajectorySequenceBuilder(pickup)
+                .lineToLinearHeading(new Pose2d(1.5, -39.00, Math.toRadians(90.00)))
                 .build();
 
 
         TrajectorySequence returnToZone = drive.trajectorySequenceBuilder(new Pose2d(1.5, -41.00, Math.toRadians(90.00)))
-                .lineToSplineHeading(new Pose2d(33.33, -44.52, Math.toRadians(-10)))
-                .splineToSplineHeading(new Pose2d(49.40, -65, Math.toRadians(270)), Math.toRadians(270.00))
+                .lineToSplineHeading(new Pose2d(31.33, -44.52, Math.toRadians(-10)))
+                .splineToSplineHeading(pickup, Math.toRadians(270.00))
                 .build();
 
 
@@ -97,8 +105,8 @@ public class RRAuto2 extends LinearOpMode {
 
         setArmPosition(MAX_POSITION);
 
+        int samplesScored = 0;
         while(opModeIsActive() && !isStopRequested()) {
-
             switch(currentState) {
                 case SCORE_FIRST:
                     if (!drive.isBusy()) {
@@ -111,16 +119,39 @@ public class RRAuto2 extends LinearOpMode {
                         currentState = State.PUSH_OTHERS;
                         drive.followTrajectorySequenceAsync(pushOthers);
                         setArmPosition(GRAB_POSITION);
+                        samplesScored++;
                     }
                     break;
                 case PUSH_OTHERS:
+
+                    if (drive.getPoseEstimate().getY() < -45 && drive.getPoseEstimate().getX() > 20) {
+                        double heading = drive.getPoseEstimate().getHeading();
+                        heading += Math.PI/2.0;
+                        int position = -Math.abs((int)(400.0/Math.cos(heading)));
+                        if (position > -2100)
+                            setExtendPosition(position);
+                        else
+                            setExtendPosition(-2100);
+                        telemetry.addData("extend", extend.getTargetPosition());
+                        telemetry.addData("heading", heading);
+                        telemetry.addData("cos", Math.cos(heading));
+                        telemetry.update();
+                    }
+                    else {
+                        setExtendPosition(0);
+                    }
+                    // arm position = cos(heading)*horizontal distance from samples
+                    //                                 ^ in motor ticks, not inches
+                    // intake head position = heading (translated to 0-1)
+                    // else
+                    // arm position = 0 (fast)
                     if (!drive.isBusy()) {
-                        currentState = State.DRIVE_TO_SCORE_FIRST;
+                        currentState = State.DRIVE_TO_SCORE;
                         drive.followTrajectorySequenceAsync(driveToScore);
                         setArmPosition(MAX_POSITION);
                     }
                     break;
-                case DRIVE_TO_SCORE_FIRST:
+                case DRIVE_TO_SCORE:
                     if (!drive.isBusy()) {
                         currentState = State.SCORING;
                         setArmPosition(SCORED_POSITION);
@@ -128,44 +159,35 @@ public class RRAuto2 extends LinearOpMode {
                     break;
                 case SCORING:
                     if (atArmPosition(SCORED_POSITION)) {
-//                        count++;
-//                        if (count < 4) {
-                        currentState = State.RETURN;
-                        drive.followTrajectorySequenceAsync(returnToZone);
-                        setArmPosition(GRAB_POSITION);
-//                        } else {
-//                            currentState = State.IDLE;
-//                            setArmPosition(0);
-//                        }
+                        samplesScored++;
+                        if (samplesScored == 5) {
+//                            currentState = State.PARK;
+//                            drive.followTrajectorySequenceAsync(park);
+                            currentState = State.IDLE;
+                            setArmPosition(0);
+                        } else {
+                            currentState = State.RETURN;
+                            drive.followTrajectorySequenceAsync(returnToZone);
+                            setArmPosition(GRAB_POSITION);
+                        }
                     }
                     break;
-                //for 60 point: return, drive to score 2, scoring
                 case RETURN:
                     if (!drive.isBusy()) {
-                        currentState = State.DRIVE_TO_SCORE_SECOND;
-                        drive.followTrajectorySequenceAsync(driveToScoreSecond);
+                        currentState = State.DRIVE_TO_SCORE;
+                        drive.followTrajectorySequenceAsync(driveToScore);
                         setArmPosition(MAX_POSITION);
-                    }
-                    break;
-                case DRIVE_TO_SCORE_SECOND:
-                    if (!drive.isBusy()) {
-                        currentState = State.SCORING_SECOND;
-                        setArmPosition(GRAB_POSITION);
-                    }
-                    break;
-                case SCORING_SECOND:
-                    if (atArmPosition(SCORED_POSITION)) {
-                        currentState = State.PARK;
-                        drive.followTrajectorySequenceAsync(park);
-                        setArmPosition(0);
                     }
                     break;
                 case PARK:
                     if (!drive.isBusy()) {
                         currentState = State.IDLE;
                     }
+                    break;
                 case IDLE:
                     break;
+
+            
             }
 
             drive.update();
@@ -182,6 +204,15 @@ public class RRAuto2 extends LinearOpMode {
         arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         arm.setPower(power);
         arm.setTargetPosition(position);
+    }
+
+    public void setExtendPosition(int position) {
+        setExtendPosition(position, 1);
+    }
+    public void setExtendPosition(int position, double power) {
+        extend.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        extend.setPower(power);
+        extend.setTargetPosition(position);
     }
 
     public boolean atArmPosition(int target) {
