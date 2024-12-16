@@ -31,7 +31,7 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
     private final int MAX_POSITION = -2092;
     private final int SCORED_POSITION = -1324;
     private final int MAX_EXTEND = -2160;
-    private final int FLIP_SCORE = 0;
+    private final int FLIP_SCORE = 1350;
     private final int FLIP_INTAKE = 0;
     enum IntakeMode {
         OFF, NEAR, LEFT, RIGHT
@@ -57,9 +57,6 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         extend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         extend.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        flip.setTargetPosition(0);
-        flip.setPower(1);
-        flip.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         offset = 0;
 
@@ -69,13 +66,19 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
         drive.setPoseEstimate(RRAutoOdometry.endPose);
 
         waitForStart();
-        pitch.setPosition(1);
+        pitch.setPosition(0);
         arm.setTargetPosition(0);
+        flip.setPower(1);
+        flip.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//        flip.setTargetPosition(0);
 
         if (isStopRequested()) return;
 
         double speed_factor = 0.4;
         IntakeMode state = IntakeMode.OFF;
+        boolean raising = false;
+
+        extend.setTargetPosition(0);
 
         while (opModeIsActive() && !isStopRequested()) {
             telemetry.addData("speed_factor:", speed_factor);
@@ -84,9 +87,42 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
             telemetry.addData("heading position", heading.getPosition());
             telemetry.addData("state", state);
             telemetry.addData("flip", flip.getCurrentPosition());
+            telemetry.addData("raising", raising);
             telemetry.update();
             // Read pose
             Pose2d poseEstimate = drive.getPoseEstimate();
+
+            {
+                // d = center robot to head (> ~|-1500|)
+                // h = center robot to arm axis (440)
+                // a = (d/cos() + (h/sin()cos()) - h/tan())
+                // position = a - d
+                // PUT IN RRAuto2
+                double heading = drive.getPoseEstimate().getHeading();
+                if (heading > Math.PI)
+                    heading -= 2 * Math.PI;
+                double headingServo;
+                headingServo = -(heading / Math.PI) + 0.52;
+
+                pitch.setPosition(1);
+                this.heading.setPosition(headingServo);
+                // obsolete
+                int position = -Math.abs((int) (400.0 / Math.cos(heading) + 440 * Math.tan(heading)));
+                if (position > -2100)
+                    setExtendPosition(position);
+                else
+                    setExtendPosition(-2100);
+                telemetry.addData("cosine", 400.0 / Math.cos(heading));
+                telemetry.addData("tangent", 440 * Math.tan(heading));
+                telemetry.addData("total", -Math.abs((int) (400.0 / Math.cos(heading) + 440 * Math.tan(heading))));
+                telemetry.addData("heading servo", headingServo);
+                telemetry.update();
+                flip.setTargetPosition(FLIP_INTAKE);
+            }
+
+
+
+
 
             // Change intake mode to dpad
             if (gamepad1.dpad_up) {
@@ -94,7 +130,7 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
                 extend.setTargetPosition(0);
                 extend.setPower(1);
                 extend.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                pitch.setPosition(1);
+                pitch.setPosition(0);
                 heading.setPosition(0.52);
             } if (gamepad1.dpad_left)
                 state = IntakeMode.LEFT;
@@ -119,16 +155,16 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
             if (gamepad1.right_bumper) {
                 intakeR.setPower(-1);
                 intakeL.setPower(1);
-                pitch.setPosition(0);
+                pitch.setPosition(1);
             } else if (gamepad1.left_bumper) {
                 intakeR.setPower(1);
                 intakeL.setPower(-1);
-                pitch.setPosition(1);
+                pitch.setPosition(0);
             }
             if (!(gamepad1.left_bumper || gamepad1.right_bumper)) {
                 intakeR.setPower(0);
                 intakeL.setPower(0);
-                pitch.setPosition(1);
+                pitch.setPosition(0);
             }
 
             // increase speed when right trigger
@@ -173,19 +209,24 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
                 //Arm Code
                 if (gamepad1.cross && !gamepad1.share) {
                     setArmPosition(0);
+                    raising = false;
                     //Floor position - Zero
                 } if (gamepad1.triangle && !gamepad1.share) {
                     setArmPosition(MAX_POSITION);
-                    flip.setTargetPosition(FLIP_SCORE);
+                    raising = true;
                     //Raised - ready to score
                 } if (gamepad1.square) {
                     //Pickup position
                     setArmPosition(GRAB_POSITION);
-                    flip.setTargetPosition(FLIP_INTAKE);
+                    raising = false;
                 } if (gamepad1.circle) {
                     //Place - Pull down
                     setArmPosition(SCORED_POSITION);
                 }
+                if (raising && arm.getCurrentPosition() < -600)
+                    flip.setTargetPosition(FLIP_SCORE);
+                if (!raising)
+                    flip.setTargetPosition(FLIP_INTAKE);
 
                 if (extend.getCurrentPosition() > -10)
                     extend.setPower(0.1);
@@ -252,5 +293,14 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
         arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         arm.setPower(power);
         arm.setTargetPosition(position + offset);
+    }
+
+    public void setExtendPosition(int position) {
+        setExtendPosition(position, 1);
+    }
+    public void setExtendPosition(int position, double power) {
+        extend.setPower(position);
+        extend.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        extend.setTargetPosition(position);
     }
 }

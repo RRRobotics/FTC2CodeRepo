@@ -26,8 +26,8 @@ public class LocalizationTest extends LinearOpMode {
 
 //        drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        Encoder leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "leftEncoder"));
-        Encoder rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "BL"));
+        Encoder leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "FL"));
+        Encoder rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "BR"));
         Encoder frontEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "frontEncoder"));
 
         waitForStart();

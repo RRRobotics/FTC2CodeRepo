@@ -31,7 +31,7 @@ public class RRAuto2 extends LinearOpMode {
     private final int MAX_POSITION = -2092;
 
     private final int SCORED_POSITION = -1324;
-    private final int FLIP_SCORE = 0;
+    private final int FLIP_SCORE = 1350;
     private final int FLIP_INTAKE = 0;
 
     public static Pose2d endPose;
@@ -51,25 +51,21 @@ public class RRAuto2 extends LinearOpMode {
         BR = hardwareMap.get(DcMotor.class, "BR");
         arm = hardwareMap.get(DcMotor.class, "arm");
         extend = hardwareMap.get(DcMotor.class, "extend");
+        flip = hardwareMap.get(DcMotor.class, "flip");
         heading = hardwareMap.get(Servo.class, "heading");
         pitch = hardwareMap.get(Servo.class, "pitch");
-        intake = hardwareMap.get(CRServo.class, "Intake");
         telemetry.addData("initialization:", "is a success");
         telemetry.update();
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        arm.setTargetPosition(0);
         extend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        extend.setTargetPosition(0);
-        flip.setTargetPosition(0);
-        flip.setPower(1);
-        flip.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        flip.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         endPose = new Pose2d();
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         TrajectorySequence scoreFirst = drive.trajectorySequenceBuilder(new Pose2d(8.50, -66.35, Math.toRadians(90.00)))
                 .lineToSplineHeading(new Pose2d(8.50, -36.00, Math.toRadians(90.00)))
-                .addDisplacementMarker(30, () -> {setArmPosition(SCORED_POSITION);})
+                .addDisplacementMarker(29, () -> {setArmPosition(SCORED_POSITION);})
                 .build();
 
         drive.setPoseEstimate(scoreFirst.start());
@@ -86,19 +82,29 @@ public class RRAuto2 extends LinearOpMode {
 
         TrajectorySequence driveToScore = drive.trajectorySequenceBuilder(new Pose2d(40.00, -63, Math.toRadians(270)))
                 .lineToLinearHeading(new Pose2d(6.5, -39.00, Math.toRadians(270.00)))
+                .addDisplacementMarker(40, () -> {setArmPosition(SCORED_POSITION);})
                 .build();
 
 
-        TrajectorySequence returnToZone = drive.trajectorySequenceBuilder(new Pose2d(6.5, -39.00, Math.toRadians(90.00)))
+        TrajectorySequence returnToZone = drive.trajectorySequenceBuilder(new Pose2d(6.5, -39.00, Math.toRadians(270.00)))
                 .lineToConstantHeading(new Vector2d(25, -44.52))
                 .splineToConstantHeading(new Vector2d(40.00, -63), Math.toRadians(270.00))
+                .build();
+
+        TrajectorySequence park = drive.trajectorySequenceBuilder(new Pose2d(6.5, -39.00, Math.toRadians(270.00)))
+                .lineToConstantHeading(new Vector2d(45.00, -55.00))
                 .build();
 
 
         waitForStart();
 
-        pitch.setPosition(1);
+        pitch.setPosition(0);
         heading.setPosition(0.52);
+        extend.setTargetPosition(0);
+        flip.setTargetPosition(0);
+        flip.setPower(1);
+        flip.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        arm.setTargetPosition(0);
 
         if(isStopRequested()) return;
 
@@ -125,11 +131,18 @@ public class RRAuto2 extends LinearOpMode {
                     }
                     break;
                 case PUSH_OTHERS:
-                    if (drive.getPoseEstimate().getY() < -45 && drive.getPoseEstimate().getX() > 20) {
-                        double heading = drive.getPoseEstimate().getHeading();
+                    double heading = drive.getPoseEstimate().getHeading();
+                    if (heading > Math.PI)
+                        heading -= 2*Math.PI;
+                    double headingServo;
+                        headingServo = -(heading/Math.PI) + 0.5;
+                    boolean intaking = (drive.getPoseEstimate().getY() < -45 && drive.getPoseEstimate().getY() > -52 && (heading > Math.toRadians(285) || heading < Math.toRadians(90)) && drive.getPoseEstimate().getX() > 20);
+                    if (intaking) {
 //                      ???  heading += Math.PI/2.0;
-                        pitch.setPosition(0);
-                        this.heading.setPosition(-heading/Math.PI + 2.0);
+
+                        // REFER TO TELEOP LINE 100
+                        pitch.setPosition(1);
+                        this.heading.setPosition(headingServo);
                         int position = -Math.abs((int)(400.0/Math.cos(heading)));
                         if (position > -2100)
                             setExtendPosition(position);
@@ -138,41 +151,40 @@ public class RRAuto2 extends LinearOpMode {
                         telemetry.addData("extend", extend.getTargetPosition());
                         telemetry.addData("heading", heading);
                         telemetry.addData("cosine heading", Math.cos(heading));
+                        telemetry.addData("heading servo", headingServo);
                         telemetry.update();
                         flip.setTargetPosition(FLIP_INTAKE);
                     }
                     else {
                         setExtendPosition(0);
-                        heading.setPosition(0.52);
-                        pitch.setPosition(1);
+                        this.heading.setPosition(0.52);
+                        pitch.setPosition(0);
                     }
 
                     if (!drive.isBusy()) {
                         currentState = State.DRIVE_TO_SCORE;
                         drive.followTrajectorySequenceAsync(driveToScore);
                         setArmPosition(MAX_POSITION);
-                        flip.setTargetPosition(FLIP_SCORE);
                     }
                     break;
                 case DRIVE_TO_SCORE:
                     if (!drive.isBusy()) {
                         currentState = State.SCORING;
                         setArmPosition(SCORED_POSITION);
-                    }
+                    } if (arm.getCurrentPosition() < -600)
+                        flip.setTargetPosition(FLIP_SCORE);
                     break;
                 case SCORING:
                     if (atArmPosition(SCORED_POSITION)) {
+                        setArmPosition(-600);
+                        flip.setTargetPosition(FLIP_INTAKE);
                         samplesScored++;
                         if (samplesScored == 5) {
-//                            currentState = State.PARK;
-//                            drive.followTrajectorySequenceAsync(park);
-                            currentState = State.IDLE;
-                            setArmPosition(0);
+                            currentState = State.PARK;
+                            drive.followTrajectorySequenceAsync(park);
                         } else {
                             currentState = State.RETURN;
                             drive.followTrajectorySequenceAsync(returnToZone);
-                            setArmPosition(GRAB_POSITION);
-                            flip.setTargetPosition(FLIP_INTAKE);
                         }
                     }
                     break;
@@ -181,13 +193,16 @@ public class RRAuto2 extends LinearOpMode {
                         currentState = State.DRIVE_TO_SCORE;
                         drive.followTrajectorySequenceAsync(driveToScore);
                         setArmPosition(MAX_POSITION);
-                        flip.setTargetPosition(FLIP_SCORE);
                     }
+                    else if (atFlipPosition(0))
+                        setArmPosition(GRAB_POSITION);
                     break;
                 case PARK:
                     if (!drive.isBusy()) {
                         currentState = State.IDLE;
                     }
+                    if (atFlipPosition(0))
+                        setArmPosition(0);
                     break;
                 case IDLE:
                     break;
@@ -221,6 +236,10 @@ public class RRAuto2 extends LinearOpMode {
 
     public boolean atArmPosition(int target) {
         return Math.abs(target - arm.getCurrentPosition()) < 10;
+    }
+
+    public boolean atFlipPosition(int target) {
+        return Math.abs(target - flip.getCurrentPosition()) < 10;
     }
 
 }
