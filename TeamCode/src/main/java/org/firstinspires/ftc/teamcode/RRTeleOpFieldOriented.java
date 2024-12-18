@@ -92,37 +92,6 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
             // Read pose
             Pose2d poseEstimate = drive.getPoseEstimate();
 
-            {
-                // d = center robot to head (> ~|-1500|)
-                // h = center robot to arm axis (440)
-                // a = (d/cos() + (h/sin()cos()) - h/tan())
-                // position = a - d
-                // PUT IN RRAuto2
-                double heading = drive.getPoseEstimate().getHeading();
-                if (heading > Math.PI)
-                    heading -= 2 * Math.PI;
-                double headingServo;
-                headingServo = -(heading / Math.PI) + 0.52;
-
-                pitch.setPosition(1);
-                this.heading.setPosition(headingServo);
-                // obsolete
-                int position = -Math.abs((int) (400.0 / Math.cos(heading) + 440 * Math.tan(heading)));
-                if (position > -2100)
-                    setExtendPosition(position);
-                else
-                    setExtendPosition(-2100);
-                telemetry.addData("cosine", 400.0 / Math.cos(heading));
-                telemetry.addData("tangent", 440 * Math.tan(heading));
-                telemetry.addData("total", -Math.abs((int) (400.0 / Math.cos(heading) + 440 * Math.tan(heading))));
-                telemetry.addData("heading servo", headingServo);
-                telemetry.update();
-                flip.setTargetPosition(FLIP_INTAKE);
-            }
-
-
-
-
 
             // Change intake mode to dpad
             if (gamepad1.dpad_up) {
@@ -175,7 +144,8 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
 
             Vector2d input;
             if (state == IntakeMode.OFF) {
-                heading.setPosition(0.52);
+//                heading.setPosition(0.52);
+
 
                 // drive code
                 input = new Vector2d(
@@ -233,6 +203,14 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
 
 
             } else if (state == IntakeMode.NEAR) {
+                // snap heading
+                double headingRobot = drive.getPoseEstimate().getHeading();
+                if (headingRobot <= Math.toRadians(180)) {
+                    drive.turn(-headingRobot);
+                } else {
+                    drive.turn(Math.toRadians(360) - headingRobot);
+                }
+
                 // Only strafe drive code
                 input = new Vector2d(0, -gamepad1.left_stick_x * speed_factor
                 ).rotated(-poseEstimate.getHeading());
@@ -251,6 +229,16 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
                 }
 
             } else if (state == IntakeMode.RIGHT) {
+                // snap heading
+                double headingRobot = drive.getPoseEstimate().getHeading();
+                if (headingRobot <= Math.toRadians(90)) {
+                    drive.turn(Math.toRadians(90) - headingRobot);
+                } else if (headingRobot >= Math.toRadians(270)) {
+                    drive.turn(Math.toRadians(450) - headingRobot);
+                } else {
+                    drive.turn(Math.toRadians(90) - headingRobot);
+                }
+
                 input = new Vector2d(-gamepad1.left_stick_y * speed_factor,0
                 ).rotated(-poseEstimate.getHeading());
                 drive.setWeightedDrivePower(new Pose2d(input.getX(), input.getY(), 0));
@@ -267,6 +255,16 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
                     extend.setTargetPosition(MAX_EXTEND);
                 }
             } else if (state == IntakeMode.LEFT) {
+                // snap heading
+                double headingRobot = drive.getPoseEstimate().getHeading();
+                if (headingRobot >= Math.toRadians(270)) {
+                    drive.turn(-headingRobot + Math.toRadians(270));
+                } else if (headingRobot <= Math.toRadians(90)) {
+                    drive.turn(-headingRobot - Math.toRadians(90));
+                } else {
+                    drive.turn(Math.toRadians(270) - headingRobot);
+                }
+
                 input = new Vector2d(-gamepad1.left_stick_y * speed_factor,0
                 ).rotated(-poseEstimate.getHeading());
                 drive.setWeightedDrivePower(new Pose2d(input.getX(), input.getY(), 0));

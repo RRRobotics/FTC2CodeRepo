@@ -16,7 +16,10 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.drive.*;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 
-import java.util.Timer;
+import net.jafama.FastMath;
+
+import java.text.DecimalFormat;
+
 
 @Autonomous(name = "RRAuto2")
 public class RRAuto2 extends LinearOpMode {
@@ -70,14 +73,17 @@ public class RRAuto2 extends LinearOpMode {
 
         drive.setPoseEstimate(scoreFirst.start());
 
+
+        int y = -48;
+        double turn = Math.toRadians(120);
+
         TrajectorySequence pushOthers = drive.trajectorySequenceBuilder(new Pose2d(8.5, -36, Math.toRadians(90)))
-                .lineToLinearHeading(new Pose2d(33.00, -50.00, Math.toRadians(70.00)))
-                .turn(-Math.toRadians(140))
-                .lineToLinearHeading(new Pose2d(43.00, -50.00, Math.toRadians(70)))
-                .turn(-Math.toRadians(140))
-                .lineToLinearHeading(new Pose2d(53.00, -50.00, Math.toRadians(70)))
-                .turn(-Math.toRadians(140))
-                .splineToLinearHeading(new Pose2d(40.00, -65, Math.toRadians(270)), Math.toRadians(270))
+                .lineToLinearHeading(new Pose2d(38.00, y, turn / 2.0))
+                .lineToLinearHeading(new Pose2d(38.00, y - 10, -turn / 2.0))
+                .lineToLinearHeading(new Pose2d(48.00, y, turn / 2.0))
+                .lineToLinearHeading(new Pose2d(48.00, y - 10, -turn / 2.0))
+                .lineToLinearHeading(new Pose2d(58.00, y, turn / 2.0))
+                .lineToSplineHeading(new Pose2d(58.00, -65, Math.toRadians(270)))
                 .build();
 
         TrajectorySequence driveToScore = drive.trajectorySequenceBuilder(new Pose2d(40.00, -63, Math.toRadians(270)))
@@ -114,6 +120,33 @@ public class RRAuto2 extends LinearOpMode {
         setArmPosition(MAX_POSITION);
 
         int samplesScored = 0;
+        // arm distance constant
+        int d = 1450;
+        // arm horizontal offset constant
+        int h = 440;
+        // arm vertical offset constant
+        int k = 400;
+        double robotHeading, servoHeading;
+        boolean intaking;
+
+        // precalculate arm values
+        double range = turn + Math.toRadians(10);
+        int valuesPerRadian = 100;
+        float start = Math.round(-range * 50) / (float)100.0;
+        //arm positions
+        int[] table = new int[(int)(range * valuesPerRadian)+1];
+        for (float theta = start; theta < start + range; theta+= 0.01F) {
+            int index = (int)((theta - start) * 100);
+            double sin = FastMath.sin(theta);
+            double cos = FastMath.cos(theta);
+            int position = -(int)((d / cos) // c
+                    + (h / (sin * cos)) // a
+                    - (h / (sin / cos)) // e
+                    - d + k);
+            table[index] = position;
+            System.out.println("theta: " + theta + " index: " + index + " position: " + position);
+        }
+
         while(opModeIsActive() && !isStopRequested()) {
             switch(currentState) {
                 case SCORE_FIRST:
@@ -131,33 +164,38 @@ public class RRAuto2 extends LinearOpMode {
                     }
                     break;
                 case PUSH_OTHERS:
-                    double heading = drive.getPoseEstimate().getHeading();
-                    if (heading > Math.PI)
-                        heading -= 2*Math.PI;
-                    double headingServo;
-                        headingServo = -(heading/Math.PI) + 0.5;
-                    boolean intaking = (drive.getPoseEstimate().getY() < -45 && drive.getPoseEstimate().getY() > -52 && (heading > Math.toRadians(285) || heading < Math.toRadians(90)) && drive.getPoseEstimate().getX() > 20);
+                    extend.setPower(1);
+                    robotHeading = drive.getPoseEstimate().getHeading();
+                    if (robotHeading > Math.PI)
+                        robotHeading -= 2*Math.PI;
+                    intaking = (drive.getPoseEstimate().getY() < y + 5 && drive.getPoseEstimate().getY() > y - 2 && (robotHeading > Math.toRadians(285) || robotHeading < Math.toRadians(90)) && drive.getPoseEstimate().getX() > 15);
                     if (intaking) {
-//                      ???  heading += Math.PI/2.0;
+                        // d = center robot to head (> ~|-1500|)
+                        // h = center robot to arm axis (440)
+                        // a = (d/cos() + (h/sin()cos()) - h/tan())
+                        // position = a - d + k
 
-                        // REFER TO TELEOP LINE 100
+                        servoHeading = -((robotHeading * 0.75) / Math.PI) + 0.52;
+
                         pitch.setPosition(1);
-                        this.heading.setPosition(headingServo);
-                        int position = -Math.abs((int)(400.0/Math.cos(heading)));
+                        heading.setPosition(servoHeading);
+
+                        int angle = (int)(Math.round((robotHeading + turn / 2.0) * 100));
+                        if (angle < 0)
+                            angle = 0;
+                        if (angle > table.length - 1)
+                            angle = table.length - 1;
+                        int position = table[angle];
+
+
                         if (position > -2100)
                             setExtendPosition(position);
                         else
                             setExtendPosition(-2100);
-                        telemetry.addData("extend", extend.getTargetPosition());
-                        telemetry.addData("heading", heading);
-                        telemetry.addData("cosine heading", Math.cos(heading));
-                        telemetry.addData("heading servo", headingServo);
-                        telemetry.update();
                         flip.setTargetPosition(FLIP_INTAKE);
-                    }
-                    else {
+                    } else {
                         setExtendPosition(0);
-                        this.heading.setPosition(0.52);
+                        heading.setPosition(0.52);
                         pitch.setPosition(0);
                     }
 
