@@ -9,6 +9,7 @@ import com.acmerobotics.roadrunner.trajectory.constraints.MecanumVelocityConstra
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -29,15 +30,15 @@ public class RRAuto3 extends LinearOpMode {
     Servo pitch, heading;
     CRServo intake;
     private double speed_factor = 0.4;
-    private final int GRAB_POSITION = -219;
+    private final int GRAB_POSITION = 0;
 
-    private final int MAX_POSITION = -2092;
+    private final int MAX_POSITION = -2010;
 
-    private final int SCORED_POSITION = -1324;
+    private final int SCORED_POSITION = -1350;
 
     //opposite of teleop
     private final int FLIP_SCORE = 0;
-    private final int FLIP_INTAKE = 1350;
+    private final int FLIP_INTAKE = -1450;
 
     public static Pose2d endPose;
 
@@ -69,46 +70,70 @@ public class RRAuto3 extends LinearOpMode {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         TrajectorySequence scoreFirst = drive.trajectorySequenceBuilder(new Pose2d(8.50, -66.35, Math.toRadians(90.00)))
-                .lineToSplineHeading(new Pose2d(8.50, -36.00, Math.toRadians(90.00)))
-                .addDisplacementMarker(29, () -> {setArmPosition(SCORED_POSITION);})
+                .lineToSplineHeading(new Pose2d(8.50, -35.50, Math.toRadians(90.00)))
+                .addDisplacementMarker(29.7, () -> {setArmPosition(SCORED_POSITION);})
                 .build();
 
         drive.setPoseEstimate(scoreFirst.start());
 
 
-        TrajectorySequence pushOthers = drive.trajectorySequenceBuilder(new Pose2d(8.5, -36, Math.toRadians(90)))
+        TrajectorySequence pushOthers = drive.trajectorySequenceBuilder(new Pose2d(8.5, -35.5, Math.toRadians(90)))
                 .setReversed(true)
-                .splineToLinearHeading(new Pose2d(38, -28.96, Math.toRadians(90.00)), Math.toRadians(90.00))
-                .splineToLinearHeading(new Pose2d(38, -18, Math.toRadians(90.00)), Math.toRadians(90.00))
-                .splineToConstantHeading(new Vector2d(49.00, -18), Math.toRadians(270.00))
-                .splineToConstantHeading(new Vector2d(49.00, -50), Math.toRadians(-88.30))
-                .splineToConstantHeading(new Vector2d(40, -18), Math.toRadians(90.00))
-                .splineToConstantHeading(new Vector2d(62, -18), Math.toRadians(270.00))
-                .splineToConstantHeading(new Vector2d(62, -50), Math.toRadians(270.00))
-                .splineToConstantHeading(new Vector2d(52, -18), Math.toRadians(90.00))
-                .splineToConstantHeading(new Vector2d(68, -18), Math.toRadians(270.00))
-                .splineToConstantHeading(new Vector2d(64, -63), Math.toRadians(270.00))
+                .splineToLinearHeading(new Pose2d(37, -28.96, Math.toRadians(90.00)), Math.toRadians(90.00))
+                .splineToLinearHeading(new Pose2d(37, -18, Math.toRadians(90.00)), Math.toRadians(90.00))
+                .splineToConstantHeading(new Vector2d(46, -18), Math.toRadians(270.00))
+                .splineToLinearHeading(new Pose2d(42, -45, Math.toRadians(90)), Math.toRadians(-88.30))
+                .splineToConstantHeading(new Vector2d(37, -18), Math.toRadians(90.00))
+                .splineToConstantHeading(new Vector2d(52, -18), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(49, -45), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(47, -16), Math.toRadians(90.00))
+                .splineToConstantHeading(new Vector2d(63, -16), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(63, -45), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(63, -30), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(60, -66.5), Math.toRadians(270))
                 .setReversed(false)
+                .addTemporalMarker(9, () -> {setArmPosition(MAX_POSITION);})
                 .build();
 
-        TrajectorySequence driveToScoreFar = drive.trajectorySequenceBuilder(new Pose2d(65.00, -64, Math.toRadians(90)))
-                .lineToLinearHeading(new Pose2d(6.5, -39.00, Math.toRadians(90.00)))
-                .addDisplacementMarker(63, () -> {setArmPosition(SCORED_POSITION);})
+        TrajectorySequence driveToScoreFar = drive.trajectorySequenceBuilder(new Pose2d(60.00, -66.5, Math.toRadians(90)))
+                .lineToLinearHeading(new Pose2d(-4, -37, Math.toRadians(90.00)))
+                .addDisplacementMarker(70, () -> {setArmPosition(SCORED_POSITION);})
+                .addDisplacementMarker(5, () -> {flip.setTargetPosition(FLIP_SCORE);})
+                .addDisplacementMarker(0.5, () -> {setArmPosition(MAX_POSITION);})
                 .build();
 
-        TrajectorySequence driveToScoreClose = drive.trajectorySequenceBuilder(new Pose2d(40.00, -64, Math.toRadians(90)))
-                .lineToLinearHeading(new Pose2d(6.5, -39.00, Math.toRadians(90.00)))
-                .addDisplacementMarker(40, () -> {setArmPosition(SCORED_POSITION);})
+        TrajectorySequence driveToScoreThird = drive.trajectorySequenceBuilder(new Pose2d(40.00, -68.5, Math.toRadians(90)))
+                .lineToLinearHeading(new Pose2d(-2, -37, Math.toRadians(90.00)))
+                .addDisplacementMarker(52, () -> {setArmPosition(SCORED_POSITION);})
+                .addDisplacementMarker(5, () -> {flip.setTargetPosition(FLIP_SCORE);})
+                .addDisplacementMarker(0.5, () -> {setArmPosition(MAX_POSITION);})
                 .build();
 
-
-        TrajectorySequence returnToZone = drive.trajectorySequenceBuilder(new Pose2d(6.5, -39.00, Math.toRadians(90.00)))
-                .lineToConstantHeading(new Vector2d(25, -44.52))
-                .splineToConstantHeading(new Vector2d(40.00, -64), Math.toRadians(270.00))
+        TrajectorySequence driveToScoreFourth = drive.trajectorySequenceBuilder(new Pose2d(40.00, -68.5, Math.toRadians(90)))
+                .lineToLinearHeading(new Pose2d(-4, -37, Math.toRadians(90.00)))
+                .addDisplacementMarker(53.5, () -> {setArmPosition(SCORED_POSITION);})
+                .addDisplacementMarker(5, () -> {flip.setTargetPosition(FLIP_SCORE);})
+                .addDisplacementMarker(0.5, () -> {setArmPosition(MAX_POSITION);})
                 .build();
 
-        TrajectorySequence park = drive.trajectorySequenceBuilder(new Pose2d(6.5, -39.00, Math.toRadians(90.00)))
-                .lineToConstantHeading(new Vector2d(45.00, -60.00))
+        TrajectorySequence driveToScoreFifth = drive.trajectorySequenceBuilder(new Pose2d(40.00, -68.5, Math.toRadians(90)))
+                .lineToLinearHeading(new Pose2d(-6, -37, Math.toRadians(90.00)))
+                .addDisplacementMarker(55, () -> {setArmPosition(SCORED_POSITION);})
+                .addDisplacementMarker(5, () -> {flip.setTargetPosition(FLIP_SCORE);})
+                .addDisplacementMarker(0.5, () -> {setArmPosition(MAX_POSITION);})
+                .build();
+
+        TrajectorySequence returnToZone = drive.trajectorySequenceBuilder(new Pose2d(-4, -37, Math.toRadians(90.00)))
+                .setReversed(true)
+                .splineToConstantHeading(new Vector2d(40.00, -68.5), Math.toRadians(270.00))
+                .setReversed(false)
+                .addDisplacementMarker(5, () -> {flip.setTargetPosition(FLIP_INTAKE);})
+                .build();
+
+        TrajectorySequence park = drive.trajectorySequenceBuilder(new Pose2d(22.75, -55.5, Math.toRadians(90.00)))
+                .setReversed(true)
+                .splineToConstantHeading(new Vector2d(40.00, -68), Math.toRadians(270.00))
+                .setReversed(false)
                 .build();
 
 
@@ -119,6 +144,7 @@ public class RRAuto3 extends LinearOpMode {
         flip.setTargetPosition(0);
         flip.setPower(1);
         flip.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        flip.setDirection(DcMotorSimple.Direction.REVERSE);
         arm.setTargetPosition(0);
 
         if(isStopRequested()) return;
@@ -127,6 +153,8 @@ public class RRAuto3 extends LinearOpMode {
         currentState = State.SCORE_FIRST;
 
         setArmPosition(MAX_POSITION);
+
+        ElapsedTime timer = new ElapsedTime();
 
         int samplesScored = 0;
         // arm distance constant
@@ -145,10 +173,11 @@ public class RRAuto3 extends LinearOpMode {
                     if (!drive.isBusy()) {
                         currentState = State.SCORING_FIRST;
                         setArmPosition(SCORED_POSITION);
+                        timer.reset();
                     }
                     break;
                 case SCORING_FIRST:
-                    if (atArmPosition(SCORED_POSITION)) {
+                    if (timer.milliseconds() > 150) {
                         currentState = State.PUSH_OTHERS;
                         drive.followTrajectorySequenceAsync(pushOthers);
                         setArmPosition(-600);
@@ -160,7 +189,6 @@ public class RRAuto3 extends LinearOpMode {
                     if (!drive.isBusy()) {
                         currentState = State.DRIVE_TO_SCORE;
                         drive.followTrajectorySequenceAsync(driveToScoreFar);
-                        setArmPosition(MAX_POSITION);
                     } else if (atFlipPosition(FLIP_INTAKE)) {
                         setArmPosition(GRAB_POSITION);
                     }
@@ -169,12 +197,11 @@ public class RRAuto3 extends LinearOpMode {
                     if (!drive.isBusy()) {
                         currentState = State.SCORING;
                         setArmPosition(SCORED_POSITION);
+                        timer.reset();
                     }
-                    if (arm.getCurrentPosition() < -600)
-                        flip.setTargetPosition(FLIP_SCORE);
                     break;
                 case SCORING:
-                    if (atArmPosition(SCORED_POSITION)) {
+                    if (timer.milliseconds() > 150) {
                         samplesScored++;
                         if (samplesScored == 5) {
                             currentState = State.PARK;
@@ -183,7 +210,6 @@ public class RRAuto3 extends LinearOpMode {
                         } else {
                             currentState = State.RETURN;
                             setArmPosition(-600);
-                            flip.setTargetPosition(FLIP_INTAKE);
                             drive.followTrajectorySequenceAsync(returnToZone);
                         }
                     }
@@ -191,8 +217,13 @@ public class RRAuto3 extends LinearOpMode {
                 case RETURN:
                     if (!drive.isBusy()) {
                         currentState = State.DRIVE_TO_SCORE;
-                        drive.followTrajectorySequenceAsync(driveToScoreClose);
-                        setArmPosition(MAX_POSITION);
+                        if (samplesScored == 2) {
+                            drive.followTrajectorySequenceAsync(driveToScoreThird);
+                        } else if (samplesScored == 3) {
+                            drive.followTrajectorySequenceAsync(driveToScoreFourth);
+                        } else if (samplesScored == 4) {
+                            drive.followTrajectorySequenceAsync(driveToScoreFifth);
+                        }
                     } else if (atFlipPosition(FLIP_INTAKE)) {
                         setArmPosition(GRAB_POSITION);
                     }
@@ -210,7 +241,7 @@ public class RRAuto3 extends LinearOpMode {
             drive.update();
 
         }
-        endPose = drive.getPoseEstimate();
+        endPose = park.end();
 
     }
 
