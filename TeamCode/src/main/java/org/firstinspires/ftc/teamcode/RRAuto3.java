@@ -84,8 +84,8 @@ public class RRAuto3 extends LinearOpMode {
                 .splineToConstantHeading(new Vector2d(46, -18), Math.toRadians(270.00))
                 .splineToLinearHeading(new Pose2d(42, -45, Math.toRadians(90)), Math.toRadians(-88.30))
                 .splineToConstantHeading(new Vector2d(37, -18), Math.toRadians(90.00))
-                .splineToConstantHeading(new Vector2d(52, -18), Math.toRadians(270.00))
-                .splineToConstantHeading(new Vector2d(49, -45), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(53, -18), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(50, -45), Math.toRadians(270.00))
                 .splineToConstantHeading(new Vector2d(47, -16), Math.toRadians(90.00))
                 .splineToConstantHeading(new Vector2d(63, -16), Math.toRadians(270.00))
                 .splineToConstantHeading(new Vector2d(63, -45), Math.toRadians(270.00))
@@ -117,15 +117,22 @@ public class RRAuto3 extends LinearOpMode {
                 .build();
 
         TrajectorySequence driveToScoreFifth = drive.trajectorySequenceBuilder(new Pose2d(40.00, -68.5, Math.toRadians(90)))
-                .lineToLinearHeading(new Pose2d(-6, -37, Math.toRadians(90.00)))
-                .addDisplacementMarker(55, () -> {setArmPosition(SCORED_POSITION);})
+                .lineToLinearHeading(new Pose2d(-2, -37, Math.toRadians(90.00)))
+                .addDisplacementMarker(52, () -> {setArmPosition(SCORED_POSITION);})
                 .addDisplacementMarker(5, () -> {flip.setTargetPosition(FLIP_SCORE);})
                 .addDisplacementMarker(0.5, () -> {setArmPosition(MAX_POSITION);})
                 .build();
 
         TrajectorySequence returnToZone = drive.trajectorySequenceBuilder(new Pose2d(-4, -37, Math.toRadians(90.00)))
                 .setReversed(true)
-                .splineToConstantHeading(new Vector2d(40.00, -68.5), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(40.00, -69), Math.toRadians(270.00))
+                .setReversed(false)
+                .addDisplacementMarker(5, () -> {flip.setTargetPosition(FLIP_INTAKE);})
+                .build();
+
+        TrajectorySequence returnToZoneLater = drive.trajectorySequenceBuilder(new Pose2d(-4, -37, Math.toRadians(90.00)))
+                .setReversed(true)
+                .splineToConstantHeading(new Vector2d(40.00, -70), Math.toRadians(270.00))
                 .setReversed(false)
                 .addDisplacementMarker(5, () -> {flip.setTargetPosition(FLIP_INTAKE);})
                 .build();
@@ -177,7 +184,7 @@ public class RRAuto3 extends LinearOpMode {
                     }
                     break;
                 case SCORING_FIRST:
-                    if (timer.milliseconds() > 150) {
+                    if (timer.milliseconds() > 100) {
                         currentState = State.PUSH_OTHERS;
                         drive.followTrajectorySequenceAsync(pushOthers);
                         setArmPosition(-600);
@@ -201,7 +208,7 @@ public class RRAuto3 extends LinearOpMode {
                     }
                     break;
                 case SCORING:
-                    if (timer.milliseconds() > 150) {
+                    if (timer.milliseconds() > 100) {
                         samplesScored++;
                         if (samplesScored == 5) {
                             currentState = State.PARK;
@@ -210,7 +217,11 @@ public class RRAuto3 extends LinearOpMode {
                         } else {
                             currentState = State.RETURN;
                             setArmPosition(-600);
-                            drive.followTrajectorySequenceAsync(returnToZone);
+                            if (samplesScored == 4)
+                                drive.followTrajectorySequenceAsync(returnToZoneLater);
+                            else
+                                drive.followTrajectorySequenceAsync(returnToZone);
+
                         }
                     }
                     break;
