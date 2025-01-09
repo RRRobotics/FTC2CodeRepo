@@ -287,6 +287,7 @@ public class RRAuto3 extends LinearOpMode {
         return Math.abs(target - arm.getCurrentPosition()) < 10;
     }
 
+
     public boolean atFlipPosition(int target) {
         return Math.abs(target - flip.getCurrentPosition()) < 10;
     }

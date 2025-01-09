@@ -30,14 +30,19 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
 
     private double speed_factor = 0.6;
     private int offset;
-    private final int GRAB_POSITION = 0;
+    private final int GRAB_POSITION = -125;
     private final int MAX_POSITION = -2010;
     private final int SCORED_POSITION = -1350;
     private final int MAX_EXTEND = -2160;
     private final int FLIP_SCORE = 0;
     private final int FLIP_INTAKE = -1400;
+    private ArmState armState = ArmState.X;
+
     enum IntakeMode {
         OFF, NEAR, LEFT, RIGHT
+    }
+    enum ArmState {
+        TRIANGLE, CIRCLE, X, SQUARE
     }
 
     @Override
@@ -235,54 +240,7 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
                 }
 
                 //Arm Code
-                if (gamepad1.cross && !gamepad1.share) {
-                    if (atFlipPosition(FLIP_INTAKE))
-                        setArmPosition(-600);
-                    else
-                        setArmPosition(0);
-                    raising = false;
-                    grab = false;
-                    flip.setTargetPosition(FLIP_SCORE);
-                    //Floor position - Zero
-                }
-                if (gamepad1.triangle && !gamepad1.share) {
-                    setArmPosition(MAX_POSITION);
-                    raising = true;
-                    grab = false;
-                    //Raised - ready to score
-                }
-                if (gamepad1.square) {
-                    //Pickup position
-                    if (atFlipPosition(FLIP_SCORE))
-                        setArmPosition(-600);
-                    else
-                        setArmPosition(GRAB_POSITION);
-                    raising = false;
-                    grab = true;
-                    flip.setTargetPosition(FLIP_INTAKE);
-
-
-                }
-                if (gamepad1.circle) {
-                    //Place - Pull down
-                    setArmPosition(SCORED_POSITION);
-                    raising = true;
-                    grab = false;
-                }
-                if (raising && arm.getCurrentPosition() < -600)
-                    flip.setTargetPosition(FLIP_SCORE);
-                if (!raising) {
-                    bumper.setPosition(0);
-                    if (atFlipPosition(FLIP_INTAKE)) {
-                        if (grab)
-                            setArmPosition(GRAB_POSITION);
-                        else
-                            setArmPosition(0);
-                    }
-
-                } else
-                    bumper.setPosition(1);
-
+                controlArm(gamepad1.triangle, gamepad1.circle, gamepad1.cross, gamepad1.square);
 
                 if (extend.getCurrentPosition() > -10)
                     extend.setPower(0.1);
@@ -371,5 +329,63 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
 
     public boolean atFlipPosition(int target) {
         return Math.abs(target - flip.getCurrentPosition()) < 10;
+    }
+
+    public boolean atArmPosition(int target) {
+        return Math.abs(target - arm.getCurrentPosition()) < 10;
+    }
+
+    public boolean atArmPositionRough(int target) {
+        return Math.abs(target - arm.getCurrentPosition()) < 30;
+    }
+
+    public void controlArm(boolean triangle, boolean circle, boolean x, boolean square) {
+        if (triangle) {
+            armState = ArmState.TRIANGLE;
+        } else if (circle) {
+            armState = ArmState.CIRCLE;
+        } else if (x) {
+            armState = ArmState.X;
+        } else if (square) {
+            armState = ArmState.SQUARE;
+        }
+
+        if (armState == ArmState.X) {
+            bumper.setPosition(0);
+            if (!atFlipPosition(FLIP_SCORE) && !atArmPositionRough(-700)) {
+                setArmPosition(-700);
+            } else if (!atFlipPosition(FLIP_SCORE) && atArmPositionRough(-700)) {
+                flip.setTargetPosition(FLIP_SCORE);
+            } else if (atFlipPosition(FLIP_SCORE)) {
+                setArmPosition(0);
+            }
+        }
+
+        if (armState == ArmState.SQUARE) {
+            bumper.setPosition(0);
+            if (!atFlipPosition(FLIP_INTAKE) && !atArmPositionRough(-700)) {
+                setArmPosition(-700);
+            } else if (!atFlipPosition(FLIP_INTAKE) && atArmPositionRough(-700)) {
+                flip.setTargetPosition(FLIP_INTAKE);
+            } else if (atFlipPosition(FLIP_INTAKE)) {
+                setArmPosition(GRAB_POSITION);
+            }
+        }
+
+        if (armState == ArmState.TRIANGLE) {
+            bumper.setPosition(1);
+            setArmPosition(MAX_POSITION);
+            if (arm.getCurrentPosition() < -700) {
+                flip.setTargetPosition(FLIP_SCORE);
+            }
+        }
+
+        if (armState == ArmState.CIRCLE) {
+            bumper.setPosition(1);
+            setArmPosition(SCORED_POSITION);
+            if (arm.getCurrentPosition() < -700) {
+                flip.setTargetPosition(FLIP_SCORE);
+            }
+        }
     }
 }
