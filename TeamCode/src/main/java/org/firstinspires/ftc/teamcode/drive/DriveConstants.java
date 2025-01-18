@@ -19,6 +19,41 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 @Config
 public class DriveConstants {
 
+    private static final int GRAB_POSITION = -200;
+
+    private static final int MAX_POSITION = -1950;
+
+    private static final int SCORED_POSITION = -1350;
+    private static final int MID_POSITION = -700;
+
+    private static final int FLIP_SCORE = 0;
+    private static final int FLIP_INTAKE = -1450;
+    private static final int MAX_EXTEND = -2160;
+
+    public static int getGRAB_POSITION() {
+        return GRAB_POSITION;
+    }
+    public static int getMAX_POSITION() {
+        return MAX_POSITION;
+    }
+    public static int getSCORED_POSITION() {
+        return SCORED_POSITION;
+    }
+    public static int getMID_POSITION() {
+        return MID_POSITION;
+    }
+    public static int getFLIP_SCORE() {
+        return FLIP_SCORE;
+    }
+    public static int getFLIP_INTAKE() {
+        return FLIP_INTAKE;
+    }
+    public static int getMAX_EXTEND() {
+        return MAX_EXTEND;
+    }
+
+
+
     /*
      * These are motor constants that should be listed online for your motors.
      */
