@@ -51,18 +51,19 @@ public class NewEncoderTest extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         arm = hardwareMap.get(DcMotor.class, "arm");
+        flip = hardwareMap.get(DcMotor.class, "flip");
 
         waitForStart();
-        System.out.println("here");
 
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        flip.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
 //        if (!isStopRequested()) return;
 
         while (opModeIsActive() && !isStopRequested()) {
             telemetry.addData("arm", arm.getCurrentPosition());
+            telemetry.addData("flip", flip.getCurrentPosition());
             telemetry.update();
-            System.out.println("there");
         }
     }
 

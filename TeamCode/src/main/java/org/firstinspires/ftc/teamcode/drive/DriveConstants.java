@@ -27,7 +27,7 @@ public class DriveConstants {
     private static final int MID_POSITION = 10000;
 
     private static final int FLIP_SCORE = 0;
-    private static final int FLIP_INTAKE = -1450;
+    private static final int FLIP_INTAKE = 4100;
     private static final int MAX_EXTEND = -2160;
 
     public static int getGRAB_POSITION() {
