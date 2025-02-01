@@ -72,6 +72,7 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
 
         offset = 0;
         flipOffset = 0;
+        int target = 0;
 
         // get pose or make new one
 //        if (RRAuto3.endPose == null)
@@ -239,36 +240,37 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
                 // increase arm offset
                 if (gamepad1.share && gamepad1.triangle) {
                     int position = arm.getCurrentPosition();
-                    int target = arm.getTargetPosition();
+                    int armtarget = arm.getTargetPosition();
                     arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     arm.setTargetPosition(position - (int) (60 * speed_factor));
-                    offset -= target - arm.getTargetPosition();
+                    offset -= armtarget - arm.getTargetPosition();
                 }
                 // decrease arm offset
                 if (gamepad1.share && gamepad1.cross) {
                     int position = arm.getCurrentPosition();
-                    int target = arm.getTargetPosition();
+                    int armtarget = arm.getTargetPosition();
                     arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     arm.setTargetPosition(position + (int) (60 * speed_factor));
-                    offset -= target - arm.getTargetPosition();
+                    offset -= armtarget - arm.getTargetPosition();
                 }
-
-                // increase arm offset
+                // increase flip offset
                 if (gamepad1.share && gamepad1.circle) {
                     int position = flip.getCurrentPosition();
-                    int target = flip.getTargetPosition();
+                    target = flip.getTargetPosition();
                     flip.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    setFlipPosition(position - (int) (10 * speed_factor));
-                    flipOffset -= target - flip.getTargetPosition();
+                    setFlipPosition(position + 1);
+                    flipOffset -= flip.getTargetPosition() - target - target;
                 }
-                // decrease arm offset
+                // decrease flip offset
                 if (gamepad1.share && gamepad1.square) {
                     int position = flip.getCurrentPosition();
-                    int target = flip.getTargetPosition();
+                    target = flip.getTargetPosition();
                     flip.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    setFlipPosition(position - (int) (10 * speed_factor));
-                    flipOffset -= target + flip.getTargetPosition();
+                    setFlipPosition(position - 1);
+                    flipOffset += flip.getTargetPosition() - target - target;
                 }
+                telemetry.addData("flip target", flip.getTargetPosition());
+                telemetry.addData("target", target);
 
                 //Arm Code
                 controlArm(gamepad1.triangle, gamepad1.circle, gamepad1.cross, gamepad1.square);
@@ -368,8 +370,8 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
 
     public void setFlipPosition(int position) {
         flip.setPower(1);
-        flip.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         flip.setTargetPosition(position + flipOffset);
+        flip.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
     public boolean atArmPositionRough(int target) {

@@ -19,12 +19,12 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 @Config
 public class DriveConstants {
 
-    private static final int GRAB_POSITION = -200;
+    private static final int GRAB_POSITION = 3000;
 
-    private static final int MAX_POSITION = -1950;
+    private static final int MAX_POSITION = 33000;
 
-    private static final int SCORED_POSITION = -1350;
-    private static final int MID_POSITION = -700;
+    private static final int SCORED_POSITION = 21000;
+    private static final int MID_POSITION = 10000;
 
     private static final int FLIP_SCORE = 0;
     private static final int FLIP_INTAKE = -1450;
