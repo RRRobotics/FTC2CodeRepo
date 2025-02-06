@@ -17,7 +17,7 @@ import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
-@Autonomous(name = "RRAuto3")
+@Autonomous(name = "RRAuto4")
 public class RRAuto4 extends LinearOpMode {
 
     DcMotor FR, FL, BR, BL;

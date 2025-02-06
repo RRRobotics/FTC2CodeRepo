@@ -87,6 +87,8 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
         pitch1.setPosition(0);
         pitch2.setPosition(0);
         arm.setTargetPosition(0);
+        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//        arm.setDirection(DcMotorSimple.Direction.REVERSE);
         flip.setPower(1);
         setFlipPosition(0);
         flip.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -302,6 +304,10 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
 
                 // pivot intake head
                 heading.setPower(gamepad1.right_stick_x);
+                // heading makes grabber turn by 3/4 of heading
+                // grabber goes 5/2x faster than servo
+                // make grabber go 3/10 of heading input
+//                grabber.setPower(-gamepad1.right_stick_x * 3.0 / 10.0);
 
                 // move extend arm with joystick
                 extend.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
