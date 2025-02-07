@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -9,6 +11,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
@@ -25,6 +28,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  */
 
 @TeleOp(group = "advanced")
+@Config
 public class RRTeleOpFieldOriented extends LinearOpMode {
     DcMotor arm, extend, flip;
     Servo pitch1, pitch2, bumper;
@@ -40,13 +44,20 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
     private final int FLIP_INTAKE = DriveConstants.getFLIP_INTAKE();
     private final int MID_POSITION = DriveConstants.getMID_POSITION();
     private ArmState armState = ArmState.X;
+    public static double Kp = 0.0;
+    public static double Ki = 0.0;
+    public static double Kd = 0.0;
 
     enum IntakeMode {
         OFF, NEAR, LEFT, RIGHT
     }
+
+    IntakeMode state = IntakeMode.OFF;
     enum ArmState {
         TRIANGLE, CIRCLE, X, SQUARE
     }
+
+    CustomPID armPID;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -65,13 +76,18 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
         heading = hardwareMap.get(CRServo.class, "heading");
         grabber = hardwareMap.get(CRServo.class, "grabber");
         bumper = hardwareMap.get(Servo.class, "bumper");
+        bumper.setDirection(Servo.Direction.REVERSE);
         telemetry.addData("initialization:", "is a success");
         telemetry.update();
+
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         extend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        flip.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        flip.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         extend.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         drive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        armPID = new CustomPID(arm, 0.0004, 0.0, 0.00002, 0);
 
         offset = 0;
         flipOffset = 0;
@@ -81,25 +97,22 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
 //        if (RRAuto3.endPose == null)
 //            RRAuto3.endPose = new Pose2d();
 //        drive.setPoseEstimate(RRAuto3.endPose);
-        drive.setPoseEstimate(new Pose2d(45.00, -60.00, Math.toRadians(90)));
+        drive.setPoseEstimate(new Pose2d(45.00, -60.00, Math.toRadians(0)));
 
         waitForStart();
         pitch1.setPosition(0);
         pitch2.setPosition(0);
-        arm.setTargetPosition(0);
-        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//        arm.setDirection(DcMotorSimple.Direction.REVERSE);
-        flip.setPower(1);
-        setFlipPosition(0);
-        flip.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        flip.setDirection(DcMotorSimple.Direction.REVERSE);
+
+//        flip.setPower(1);
+//        setFlipPosition(0);
+//        flip.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//        flip.setDirection(DcMotorSimple.Direction.REVERSE);
         bumper.setPosition(0);
 
 
         if (isStopRequested()) return;
 
         double speed_factor = 0.4;
-        IntakeMode state = IntakeMode.OFF;
         boolean raising = false;
         boolean grab = false;
         boolean autoScore = false;
@@ -110,6 +123,10 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
 
         ElapsedTime game = new ElapsedTime();
 
+
+        FtcDashboard dashboard = FtcDashboard.getInstance();
+        Telemetry dashboardTelemetry = dashboard.getTelemetry();
+
         while (opModeIsActive() && !isStopRequested()) {
             telemetry.addData("speed_factor:", speed_factor);
             telemetry.addData("arm position", arm.getCurrentPosition());
@@ -119,6 +136,14 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
             telemetry.addData("flip offset", flipOffset);
             telemetry.addData("state", state);
             telemetry.update();
+
+//            armPID.setKp(Kp);
+//            armPID.setKi(Ki);
+//            armPID.setKd(Kd);
+
+            dashboardTelemetry.addData("target", armPID.getTarget());
+            dashboardTelemetry.addData("actual", -arm.getCurrentPosition());
+            dashboardTelemetry.update();
 
             // Read pose
             Pose2d poseEstimate = drive.getPoseEstimate();
@@ -221,7 +246,6 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
             else
                 speed_factor = 0.6;
 
-
             // auto score
 //            if (gamepad1.left_trigger > 0.5 && !autoScore) {
 //                autoScore = true;
@@ -231,6 +255,8 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
 //                Pose2d pose = drive.getPoseEstimate();
 //                drive.setPoseEstimate(new Pose2d(pose.getX(), pose.getY(), pose.getHeading() - Math.toRadians(90)));
 //            }
+
+            controlHeading(gamepad1.right_stick_x);
 
             Vector2d input;
             if (state == IntakeMode.OFF) {
@@ -249,19 +275,16 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
 
                 // increase arm offset
                 if (gamepad1.share && gamepad1.triangle) {
-                    int position = arm.getCurrentPosition();
-                    int armtarget = arm.getTargetPosition();
-                    arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    arm.setTargetPosition(position - (int) (60 * speed_factor));
-                    offset -= armtarget - arm.getTargetPosition();
+//                    int position = arm.getCurrentPosition();
+//                    int armtarget = arm.getTargetPosition();
+//                    arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//                    arm.setTargetPosition(position - (int) (60 * speed_factor));
+//                    offset -= armtarget - arm.getTargetPosition();
+                    armPID.setTarget(armPID.getTarget() - 10);
                 }
                 // decrease arm offset
                 if (gamepad1.share && gamepad1.cross) {
-                    int position = arm.getCurrentPosition();
-                    int armtarget = arm.getTargetPosition();
-                    arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    arm.setTargetPosition(position + (int) (60 * speed_factor));
-                    offset -= armtarget - arm.getTargetPosition();
+                    armPID.setTarget(armPID.getTarget() + 10);
                 }
                 // increase flip offset
                 if (gamepad1.share && gamepad1.circle) {
@@ -288,12 +311,6 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
                 if (extend.getCurrentPosition() > -10)
                     extend.setPower(0.1);
 
-                if (arm.getCurrentPosition() > -10)
-                    arm.setPower(1);
-                else
-                    arm.setPower(1);
-
-
             } else if (state == IntakeMode.NEAR) {
 
 
@@ -302,8 +319,6 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
                 ).rotated(-headingRobot);
                 drive.setWeightedDrivePower(new Pose2d(input.getX(), input.getY(), 0));
 
-                // pivot intake head
-                heading.setPower(gamepad1.right_stick_x);
                 // heading makes grabber turn by 3/4 of heading
                 // grabber goes 5/2x faster than servo
                 // make grabber go 3/10 of heading input
@@ -324,9 +339,6 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
                 ).rotated(-headingRobot);
                 drive.setWeightedDrivePower(new Pose2d(input.getX(), input.getY(), 0));
 
-                // pivot intake head
-                heading.setPower(gamepad1.right_stick_x);
-
                 // move extend arm with joystick
                 extend.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 if (extend.getCurrentPosition() > MAX_EXTEND) {
@@ -341,9 +353,6 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
                 ).rotated(-headingRobot);
                 drive.setWeightedDrivePower(new Pose2d(input.getX(), input.getY(), 0));
 
-                // pivot intake head
-                heading.setPower(gamepad1.right_stick_x);
-
                 // move extend arm with joystick
                 extend.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 if (extend.getCurrentPosition() > MAX_EXTEND) {
@@ -355,14 +364,6 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
             }
             drive.update();
         }
-    }
-    public void setArmPosition(int position) {
-        setArmPosition(position, 1);
-    }
-    public void setArmPosition(int position, double power) {
-        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        arm.setPower(power);
-        arm.setTargetPosition(position + offset);
     }
 
     public void setExtendPosition(int position) {
@@ -379,7 +380,7 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
     }
 
     public boolean atArmPosition(int target) {
-        return Math.abs(target - arm.getCurrentPosition()) < 10;
+        return Math.abs(target - arm.getCurrentPosition()) < 50;
     }
 
     public void setFlipPosition(int position) {
@@ -388,11 +389,16 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
         flip.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
-    public boolean atArmPositionRough(int target) {
-        return Math.abs(target - arm.getCurrentPosition()) < 30;
+
+    public void controlHeading(double joystick) {
+        if (state != IntakeMode.OFF) {
+            heading.setPower(joystick);
+        }
     }
 
     public void controlArm(boolean triangle, boolean circle, boolean x, boolean square) {
+        armPID.update();
+
         if (triangle && !gamepad1.share) {
             armState = ArmState.TRIANGLE;
         } else if (circle && !gamepad1.share) {
@@ -405,43 +411,24 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
 
         if (armState == ArmState.X) {
             bumper.setPosition(0);
-            if (!atFlipPosition(FLIP_SCORE) && !atArmPositionRough(MID_POSITION)) {
-                setArmPosition(MID_POSITION);
-            } else if (!atFlipPosition(FLIP_SCORE) && atArmPositionRough(MID_POSITION)) {
-                setFlipPosition(FLIP_SCORE);
-            } else if (atFlipPosition(FLIP_SCORE)) {
-                setArmPosition(0);
-            }
+            armPID.setTarget(0);
         }
 
         if (armState == ArmState.SQUARE) {
             bumper.setPosition(0);
-            if (!atFlipPosition(FLIP_INTAKE) && !atArmPositionRough(MID_POSITION)) {
-                setArmPosition(MID_POSITION);
-                if (arm.getCurrentPosition() < -1200) {
-                    setFlipPosition(FLIP_INTAKE);
-                }
-            } else if ((!atFlipPosition(FLIP_INTAKE) && atArmPositionRough(MID_POSITION))) {
-                setFlipPosition(FLIP_INTAKE);
-            } else if (atFlipPosition(FLIP_INTAKE)) {
-                setArmPosition(GRAB_POSITION);
-            }
+            armPID.setTarget(GRAB_POSITION);
         }
 
         if (armState == ArmState.TRIANGLE) {
             bumper.setPosition(1);
-            setArmPosition(MAX_POSITION);
-            if (arm.getCurrentPosition() < MID_POSITION) {
-                setFlipPosition(FLIP_SCORE);
-            }
+            armPID.setTarget(MAX_POSITION);
         }
 
         if (armState == ArmState.CIRCLE) {
             bumper.setPosition(1);
-            setArmPosition(SCORED_POSITION);
-            if (arm.getCurrentPosition() < MID_POSITION) {
-                setFlipPosition(FLIP_SCORE);
-            }
+            armPID.setTarget(SCORED_POSITION);
         }
+
+
     }
 }

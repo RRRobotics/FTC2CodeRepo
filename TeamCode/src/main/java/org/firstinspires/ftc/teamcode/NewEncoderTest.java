@@ -92,11 +92,8 @@ public class NewEncoderTest extends LinearOpMode {
 
         ElapsedTime timer = new ElapsedTime();
 
-        ElapsedTime timer2 = new ElapsedTime();
-
         FtcDashboard dashboard = FtcDashboard.getInstance();
         Telemetry dashboardTelemetry = dashboard.getTelemetry();
-
 
         while (opModeIsActive() && !isStopRequested()) {
             telemetry.addData("flip", flip.getCurrentPosition());
@@ -129,10 +126,10 @@ public class NewEncoderTest extends LinearOpMode {
 //            Ki = 0.0;
 //            Kd = 0.0001;
 
-            double derivative = (double) (error - lastError) / (double) timer.seconds();
 
             if (running) {
 
+                double derivative = (double) (error - lastError) / (double) timer.seconds();
 
                 integralSum = integralSum + (error * timer.seconds());
 
