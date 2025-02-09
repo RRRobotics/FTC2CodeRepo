@@ -17,6 +17,7 @@ import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /**
@@ -33,6 +34,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class NewEncoderTest extends LinearOpMode {
     DcMotor arm, extend, flip;
     Servo pitch, heading, push, bumper;
+    TouchSensor bottom;
 
     private double speed_factor = 0.6;
     private int offset, flipOffset;
@@ -65,16 +67,17 @@ public class NewEncoderTest extends LinearOpMode {
         arm = hardwareMap.get(DcMotor.class, "arm");
         flip = hardwareMap.get(DcMotor.class, "flip");
         extend = hardwareMap.get(DcMotor.class, "extend");
+        bottom = hardwareMap.touchSensor.get("bottom");
 
 
         waitForStart();
 
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        flip.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        flip.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         arm.setPower(0.5);
         arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 //        flip.setPower(0.5);
 //        flip.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -100,6 +103,8 @@ public class NewEncoderTest extends LinearOpMode {
             telemetry.addData("arm", arm.getCurrentPosition());
             telemetry.addData("arm target", arm.getTargetPosition());
             telemetry.addData("extend", extend.getCurrentPosition());
+            telemetry.addData("is pressed", bottom.isPressed());
+            telemetry.addData("value", bottom.getValue());
 
             int encoderPosition = -arm.getCurrentPosition();
             double error = reference - encoderPosition;

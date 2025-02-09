@@ -82,9 +82,15 @@ public class RRAuto4 extends LinearOpMode {
 
         TrajectorySequence pushOthers = drive.trajectorySequenceBuilder(new Pose2d(8.5, -35.4, Math.toRadians(90)))
                 .setReversed(true)
-                .splineToLinearHeading(new Pose2d(38.45, -37.08, Math.toRadians(40.00)), Math.toRadians(2.89))
+                .splineToLinearHeading(new Pose2d(38, -28, Math.toRadians(0.00)), Math.toRadians(90.00))
                 .setReversed(false)
-                .lineToLinearHeading(new Pose2d(38.84, -48.46, Math.toRadians(-40.00)))
+                .lineToLinearHeading(new Pose2d(38, -37.00, Math.toRadians(-70.00)))
+                .splineToLinearHeading(new Pose2d(46.5, -28, Math.toRadians(0.00)), Math.toRadians(90.00))
+                .lineToLinearHeading(new Pose2d(46.5, -37.00, Math.toRadians(-70.00)))
+                .splineToLinearHeading(new Pose2d(58, -28, Math.toRadians(0.00)), Math.toRadians(00.00))
+                .setReversed(true)
+                .splineToLinearHeading(new Pose2d(52, -37, Math.toRadians(-90.00)), Math.toRadians(-88.32))
+                .setReversed(false)
                 .build();
 
 
@@ -194,13 +200,16 @@ public class RRAuto4 extends LinearOpMode {
                         currentState = State.SCORING_FIRST;
                         armPID.setTarget(SCORED_POSITION);
                         timer.reset();
+                    } if (armPID.getPosition() < MID_POSITION) {
+                        setFlipPosition(FLIP_SCORE);
                     }
                     break;
                 case SCORING_FIRST:
                     if (timer.milliseconds() > 100) {
                         currentState = State.PUSH_OTHERS;
                         drive.followTrajectorySequenceAsync(pushOthers);
-                        armPID.setTarget(MID_POSITION);
+                        armPID.setTarget(GRAB_POSITION);
+                        setFlipPosition(FLIP_INTAKE);
                         samplesScored++;
                         bumper.setPosition(0);
                         timer.reset();
@@ -212,18 +221,59 @@ public class RRAuto4 extends LinearOpMode {
                         drive.followTrajectorySequenceAsync(driveToScoreFar);
                         bumper.setPosition(1);
                     }
-
-                    if (timer.seconds() > 2.5) {
+                    double diff = 3.7;
+                    if (timer.seconds() > 3.8 + 2*diff) {
                         grabber.setPower(-1);
-                    } else if (timer.seconds() > 2.3) {
+                        setExtendPosition(0);
+                    } else if (timer.seconds() > 3 + 2*diff) {
                         grabber.setPower(0);
+                    } else if (timer.seconds() > 2.5 + 2*diff) {
+                        setExtendPosition(MAX_EXTEND);
+                    } else if (timer.seconds() > 2.4 + 2*diff) {
+                        pitch1.setPosition(0.3);
+                        pitch2.setPosition(0.3);
+                    } else if (timer.seconds() > 1.6 + 2*diff) {
+                        grabber.setPower(1);
+                    } else if (timer.seconds() > 0.5 + 2*diff) {
+                        pitch1.setPosition(1);
+                        pitch2.setPosition(1);
+                    } else if (timer.seconds() > 0.3 + 2*diff) {
+                        setExtendPosition(-500);
+                        grabber.setPower(0);
+                    }
+                    else if (timer.seconds() > 3.8 + diff) {
+                        setExtendPosition(-500);
+                    } else if (timer.seconds() > 3.5 + diff) {
+                        grabber.setPower(-1);
+                    } else if (timer.seconds() > 3 + diff) {
+                        grabber.setPower(0);
+                    } else if (timer.seconds() > 2.5 + diff) {
+                        setExtendPosition(MAX_EXTEND);
+                    } else if (timer.seconds() > 2.1 + diff) {
+                        pitch1.setPosition(0.3);
+                        pitch2.setPosition(0.3);
+                    } else if (timer.seconds() > 1.6 + diff) {
+                        grabber.setPower(1);
+                    } else if (timer.seconds() > 1.3 + diff) {
+                        pitch1.setPosition(1);
+                        pitch2.setPosition(1);
+                    } else if (timer.seconds() > 0.3 + diff) {
+                        setExtendPosition(-500);
+                        grabber.setPower(0);
+                    }
+                    else if (timer.seconds() > 3.8) {
+                        grabber.setPower(-1);
+                    } else if (timer.seconds() > 3) {
+                        grabber.setPower(0);
+                    } else if (timer.seconds() > 2.5) {
+                        setExtendPosition(MAX_EXTEND);
                     } else if (timer.seconds() > 2.1) {
-                        pitch1.setPosition(0);
-                        pitch2.setPosition(0);
+                        pitch1.setPosition(0.3);
+                        pitch2.setPosition(0.3);
                     } else if (timer.seconds() > 1.6) {
                         grabber.setPower(1);
-                    } else if (timer.seconds() > 0.75) {
-                        setExtendPosition(-1000);
+                    } else if (timer.seconds() > 0.7) {
+                        setExtendPosition(-500);
                         pitch1.setPosition(1);
                         pitch2.setPosition(1);
                     }
@@ -288,6 +338,7 @@ public class RRAuto4 extends LinearOpMode {
             }
 
             drive.update();
+            armPID.update();
 
         }
         endPose = park.end();
@@ -311,6 +362,13 @@ public class RRAuto4 extends LinearOpMode {
 
     public boolean atFlipPosition(int target) {
         return Math.abs(target - flip.getCurrentPosition()) < 20;
+    }
+
+
+    public void setFlipPosition(int position) {
+        flip.setPower(0.5);
+        flip.setTargetPosition(position + flipOffset);
+        flip.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
 }

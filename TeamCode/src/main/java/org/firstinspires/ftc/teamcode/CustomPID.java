@@ -15,6 +15,7 @@ public class CustomPID {
     double integralSum = 0.0;
     double lastError = 0;
     int oldTarget = target;
+    boolean override = false;
 
     public CustomPID(DcMotor motor, double kp, double ki, double kd, int target) {
         this.motor = motor;
@@ -47,7 +48,8 @@ public class CustomPID {
             integralSum = integralSum + (error * timer.seconds());
             double out = (Kp * error) + (Ki * integralSum) + (Kd * derivative);
 
-            motor.setPower(out);
+            if (!override)
+                motor.setPower(out);
 
             lastError = error;
 
@@ -66,6 +68,7 @@ public class CustomPID {
 
     public void setTarget(int target) {
         this.target = target;
+        override = false;
     }
 
     public boolean isRunning() {
@@ -86,5 +89,17 @@ public class CustomPID {
 
     public void setRunning(boolean running) {
         this.running = running;
+    }
+
+    public int getPosition() {
+        return -motor.getCurrentPosition();
+    }
+
+    public void setPower(double power) {
+        override = true;
+        motor.setPower(power);
+    }
+    public boolean isOverride() {
+        return override;
     }
 }
