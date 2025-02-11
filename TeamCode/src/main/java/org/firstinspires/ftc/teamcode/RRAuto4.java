@@ -65,7 +65,6 @@ public class RRAuto4 extends LinearOpMode {
         telemetry.update();
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         extend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        flip.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         endPose = new Pose2d();
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
@@ -82,19 +81,19 @@ public class RRAuto4 extends LinearOpMode {
 
         TrajectorySequence pushOthers = drive.trajectorySequenceBuilder(new Pose2d(8.5, -35.4, Math.toRadians(90)))
                 .setReversed(true)
-                .splineToLinearHeading(new Pose2d(38, -28, Math.toRadians(0.00)), Math.toRadians(90.00))
+                .splineToLinearHeading(new Pose2d(38, -27, Math.toRadians(0.00)), Math.toRadians(100.00))
                 .setReversed(false)
                 .lineToLinearHeading(new Pose2d(38, -37.00, Math.toRadians(-70.00)))
-                .splineToLinearHeading(new Pose2d(46.5, -28, Math.toRadians(0.00)), Math.toRadians(90.00))
+                .splineToLinearHeading(new Pose2d(46.5, -27, Math.toRadians(0.00)), Math.toRadians(90.00))
                 .lineToLinearHeading(new Pose2d(46.5, -37.00, Math.toRadians(-70.00)))
-                .splineToLinearHeading(new Pose2d(58, -28, Math.toRadians(0.00)), Math.toRadians(00.00))
                 .setReversed(true)
-                .splineToLinearHeading(new Pose2d(52, -37, Math.toRadians(-90.00)), Math.toRadians(-88.32))
-                .setReversed(false)
+                .splineToLinearHeading(new Pose2d(63, -15.19, Math.toRadians(90.00)), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(63, -50), Math.toRadians(270))
+                .splineToConstantHeading(new Vector2d(50, -68), Math.toRadians(270))
                 .build();
 
 
-        TrajectorySequence driveToScoreFar = drive.trajectorySequenceBuilder(new Pose2d(40.00, -68, Math.toRadians(90)))
+        TrajectorySequence driveToScoreFar = drive.trajectorySequenceBuilder(new Pose2d(50, -68, Math.toRadians(90)))
                 .lineToLinearHeading(new Pose2d(10, -60, Math.toRadians(90.00)))
                 .splineToLinearHeading(new Pose2d(-7, -35.4, Math.toRadians(90)), Math.toRadians(90)).addDisplacementMarker(70, () -> {armPID.setTarget(SCORED_POSITION);})
 //                .addDisplacementMarker(5, () -> {flip.setTargetPosition(FLIP_SCORE);})
@@ -221,33 +220,12 @@ public class RRAuto4 extends LinearOpMode {
                         drive.followTrajectorySequenceAsync(driveToScoreFar);
                         bumper.setPosition(1);
                     }
-                    double diff = 3.7;
-                    if (timer.seconds() > 3.8 + 2*diff) {
-                        grabber.setPower(-1);
+                    double diff = 2.6;
+                    if (timer.seconds() > 3 + diff) {
                         setExtendPosition(0);
-                    } else if (timer.seconds() > 3 + 2*diff) {
-                        grabber.setPower(0);
-                    } else if (timer.seconds() > 2.5 + 2*diff) {
-                        setExtendPosition(MAX_EXTEND);
-                    } else if (timer.seconds() > 2.4 + 2*diff) {
-                        pitch1.setPosition(0.3);
-                        pitch2.setPosition(0.3);
-                    } else if (timer.seconds() > 1.6 + 2*diff) {
-                        grabber.setPower(1);
-                    } else if (timer.seconds() > 0.5 + 2*diff) {
-                        pitch1.setPosition(1);
-                        pitch2.setPosition(1);
-                    } else if (timer.seconds() > 0.3 + 2*diff) {
-                        setExtendPosition(-500);
-                        grabber.setPower(0);
-                    }
-                    else if (timer.seconds() > 3.8 + diff) {
-                        setExtendPosition(-500);
-                    } else if (timer.seconds() > 3.5 + diff) {
-                        grabber.setPower(-1);
-                    } else if (timer.seconds() > 3 + diff) {
-                        grabber.setPower(0);
                     } else if (timer.seconds() > 2.5 + diff) {
+                        grabber.setPower(-1);
+                    }  else if (timer.seconds() > 2.2 + diff) {
                         setExtendPosition(MAX_EXTEND);
                     } else if (timer.seconds() > 2.1 + diff) {
                         pitch1.setPosition(0.3);
@@ -261,11 +239,12 @@ public class RRAuto4 extends LinearOpMode {
                         setExtendPosition(-500);
                         grabber.setPower(0);
                     }
-                    else if (timer.seconds() > 3.8) {
+//                    else if (timer.seconds() > 3.5) {
+//                        grabber.setPower(-1);
+//                    }
+                    else if (timer.seconds() > 2.5) {
                         grabber.setPower(-1);
-                    } else if (timer.seconds() > 3) {
-                        grabber.setPower(0);
-                    } else if (timer.seconds() > 2.5) {
+                    } else if (timer.seconds() > 2.2) {
                         setExtendPosition(MAX_EXTEND);
                     } else if (timer.seconds() > 2.1) {
                         pitch1.setPosition(0.3);
