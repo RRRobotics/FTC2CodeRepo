@@ -234,7 +234,7 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
                 if (state == IntakeMode.OFF) {
                     pitch1.setPosition(0.3);
                     pitch2.setPosition(0.3);
-                } else if (extend.getCurrentPosition() < -50) {
+                } else if (extend.getCurrentPosition() < -100) {
                     pitch1.setPosition(0.6);
                     pitch2.setPosition(0.6);
                 }
