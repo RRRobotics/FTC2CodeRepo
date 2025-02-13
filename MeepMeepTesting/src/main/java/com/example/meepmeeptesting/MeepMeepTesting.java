@@ -20,10 +20,11 @@ public class MeepMeepTesting {
 
                         .setReversed(true)
                         .splineToLinearHeading(new Pose2d(37, -27, Math.toRadians(0.00)), Math.toRadians(110.00))
+                        .turn(0.01)
                         .setReversed(false)
                         .lineToLinearHeading(new Pose2d(38, -37.00, Math.toRadians(-70.00)))
                         .splineToLinearHeading(new Pose2d(46.5, -27, Math.toRadians(0.00)), Math.toRadians(90.00))
-//                        .turn(0.01)
+                        .turn(0.01)
                         .lineToLinearHeading(new Pose2d(46.5, -37.00, Math.toRadians(-70.00)))
                         .setReversed(true)
                         .splineToLinearHeading(new Pose2d(63, -15.19, Math.toRadians(90.00)), Math.toRadians(0))

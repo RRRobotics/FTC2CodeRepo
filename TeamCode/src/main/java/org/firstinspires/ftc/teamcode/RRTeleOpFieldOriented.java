@@ -34,7 +34,7 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
     DcMotor arm, extend, flip;
     Servo pitch1, pitch2, bumper;
     CRServo heading, grabber;
-    TouchSensor bottom;
+    TouchSensor bottom, top;
 
     private double speed_factor = 0.6;
     private int offset, flipOffset;
@@ -80,6 +80,7 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
         bumper = hardwareMap.get(Servo.class, "bumper");
         bumper.setDirection(Servo.Direction.REVERSE);
         bottom = hardwareMap.touchSensor.get("bottom");
+        top = hardwareMap.touchSensor.get("top");
         telemetry.addData("initialization:", "is a success");
         telemetry.update();
 
@@ -132,10 +133,17 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
         while (opModeIsActive() && !isStopRequested()) {
             telemetry.addData("speed_factor:", speed_factor);
             telemetry.addData("arm position", armPID.getPosition());
-            telemetry.addData("extend position", extend.getCurrentPosition());
-            telemetry.addData("flip position", flip.getCurrentPosition());
-            telemetry.addData("homed", homed);
+            telemetry.addData("arm target", armPID.getTarget());
             telemetry.addData("at arm 0", atArmPositionRough(0));
+            telemetry.addData("homed", homed);
+            telemetry.addData("bottom", bottom.isPressed());
+            telemetry.addData("extend position", extend.getCurrentPosition());
+            telemetry.addData("extend target", extend.getTargetPosition());
+            telemetry.addData("flip position", flip.getCurrentPosition());
+            telemetry.addData("flip target", flip.getTargetPosition());
+            telemetry.addData("flipped", flipped);
+            telemetry.addData("top", top.isPressed());
+            telemetry.addData("at flip 0", atFlipPosition(0));
             telemetry.addData("state", state);
             telemetry.update();
 
@@ -305,8 +313,6 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
                     setFlipPosition(position - 1);
                     flipOffset += flip.getTargetPosition() - target - target;
                 }
-                telemetry.addData("flip target", flip.getTargetPosition());
-                telemetry.addData("target", target);
 
                 //Arm Code
                 controlArm(gamepad1.triangle, gamepad1.circle, gamepad1.cross, gamepad1.square);
@@ -379,7 +385,7 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
     }
 
     public boolean atFlipPosition(int target) {
-        return Math.abs(target - flip.getCurrentPosition()) < 20;
+        return Math.abs(target - flip.getCurrentPosition()) < 10;
     }
 
     public boolean atArmPosition(int target) {
@@ -403,6 +409,7 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
         }
     }
     boolean homed = false;
+    boolean flipped = false;
     public void controlArm(boolean triangle, boolean circle, boolean x, boolean square) {
         armPID.update();
 
@@ -410,8 +417,6 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
             arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             armPID.setTarget(0);
             homed = true;
-            System.out.println("reset");
-            System.out.println(armPID.isOverride());
             arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         } else if (!homed) {
             setFlipPosition(FLIP_INTAKE);
@@ -420,12 +425,23 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
             } else {
                 armPID.setTarget(-8000);
             }
-            System.out.println("lowering");
         }
 
-        if ((atArmPositionRough(0) && !bottom.isPressed()) || (!atArmPositionRough(0) && !bottom.isPressed()) && armState == ArmState.X) {
-            homed = false;
-            System.out.println("not homed");
+//        if ((atArmPositionRough(0) && !bottom.isPressed()) || (!atArmPositionRough(0) && !bottom.isPressed()) && armState == ArmState.X) {
+//            homed = false;
+//        }
+//
+//        if (bottom.isPressed() && !flipped) {
+//            flip.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//            setFlipPosition(0);
+//            flipped = true;
+//        } else if (!flipped) {
+//            flip.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//            flip.setPower(0.1);
+//        }
+
+        if ((atFlipPosition(FLIP_INTAKE) && !top.isPressed()) || (!atFlipPosition(FLIP_INTAKE) && top.isPressed())) {
+            flipped = false;
         }
 
         if (triangle && !gamepad1.share) {
