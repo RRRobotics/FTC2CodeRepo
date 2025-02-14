@@ -415,6 +415,8 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
     }
     boolean homed = false;
     boolean flipped = false;
+
+    ElapsedTime flipTimer = new ElapsedTime();
     public void controlArm(boolean triangle, boolean circle, boolean x, boolean square) {
         armPID.update();
 
@@ -432,9 +434,23 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
             }
         }
 
-//        if ((atArmPositionRough(0) && !bottom.isPressed()) || (!atArmPositionRough(0) && !bottom.isPressed()) && armState == ArmState.X) {
-//            homed = false;
-//        }
+        if ((atArmPositionRough(0) && !bottom.isPressed()) || (!atArmPositionRough(0) && !bottom.isPressed()) && armState == ArmState.X) {
+            homed = false;
+        }
+
+        if (flip.getTargetPosition() == FLIP_INTAKE && flip.getCurrentPosition() > -5 && !top.isPressed()) {
+            flipped = false;
+            flip.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            flip.setPower(1);
+        } else if (flip.getTargetPosition() == FLIP_INTAKE && top.isPressed() && !flipped) {
+            flipTimer.reset();
+            flipped = true;
+        } else if (flip.getTargetPosition() == FLIP_INTAKE && top.isPressed() && flipTimer.seconds() > 1) {
+            flip.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            setFlipPosition(0);
+        }
+
+
 //
 //        if (bottom.isPressed() && !flipped) {
 //            flip.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -445,9 +461,6 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
 //            flip.setPower(0.1);
 //        }
 
-        if ((atFlipPosition(FLIP_INTAKE) && !top.isPressed()) || (!atFlipPosition(FLIP_INTAKE) && top.isPressed())) {
-            flipped = false;
-        }
 
         if (triangle && !gamepad1.share) {
             armState = ArmState.TRIANGLE;
@@ -461,30 +474,22 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
             setFlipPosition(FLIP_INTAKE);
         }
 
-//        if (armState == ArmState.X && !lowered) {
-//            bumper.setPosition(0);
-//            armPID.setTarget(0);
-//            if (atArmPositionRough(0) && !bottom.isPressed())
-//                lowered = true;
-//        } if (armState == ArmState.X && lowered) {
-//            armPID.setPower(0.3);
-//            setFlipPosition(FLIP_INTAKE);
-//        }
+
         if (armState == ArmState.X) {
             bumper.setPosition(0);
             armPID.setTarget(0);
-            if (flip.getCurrentPosition() > -10) {
-                setFlipPosition(5, 1);
-            }
+//            if (flip.getCurrentPosition() > -10) {
+//                setFlipPosition(FLIP_INTAKE, 1);
+//            }
         }
 
 
         if (armState == ArmState.SQUARE) {
             bumper.setPosition(0);
             armPID.setTarget(GRAB_POSITION);
-            if (flip.getCurrentPosition() > -10) {
-                setFlipPosition(5, 1);
-            }
+//            if (flip.getCurrentPosition() > -10) {
+//                setFlipPosition(FLIP_INTAKE, 1);
+//            }
         }
 
         if (armState == ArmState.TRIANGLE) {

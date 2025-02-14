@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.DriveConstants;
@@ -24,6 +25,7 @@ public class RRAuto4 extends LinearOpMode {
     DcMotor arm, extend, flip;
     Servo pitch1, pitch2, bumper;
     CRServo heading, grabber;
+    TouchSensor top;
 
     private double speed_factor = 0.6;
     private int offset, flipOffset;
@@ -61,6 +63,7 @@ public class RRAuto4 extends LinearOpMode {
         grabber = hardwareMap.get(CRServo.class, "grabber");
         bumper = hardwareMap.get(Servo.class, "bumper");
         bumper.setDirection(Servo.Direction.REVERSE);
+        top = hardwareMap.touchSensor.get("top");
         telemetry.addData("initialization:", "is a success");
         telemetry.update();
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -83,7 +86,7 @@ public class RRAuto4 extends LinearOpMode {
                 .splineToLinearHeading(new Pose2d(36.5, -28, Math.toRadians(0.00)), Math.toRadians(90.00))
                 .setReversed(false)
                 .lineToLinearHeading(new Pose2d(36.5, -37.00, Math.toRadians(-70.00)))
-                .splineToLinearHeading(new Pose2d(46.25, -27, Math.toRadians(0.00)), Math.toRadians(90.00))
+                .splineToLinearHeading(new Pose2d(46.25, -27, Math.toRadians(0.00)), Math.toRadians(80.00))
                 .turn(0.01)
                 .lineToLinearHeading(new Pose2d(46.25, -37.00, Math.toRadians(-70.00)))
                 .setReversed(true)
@@ -95,38 +98,31 @@ public class RRAuto4 extends LinearOpMode {
 
         TrajectorySequence driveToScoreFar = drive.trajectorySequenceBuilder(new Pose2d(50, -67, Math.toRadians(90)))
                 .lineToLinearHeading(new Pose2d(20, -51, Math.toRadians(90.00)))
-                .splineToLinearHeading(new Pose2d(3, -32.5, Math.toRadians(90)), Math.toRadians(90))
-//                .addDisplacementMarker(70, () -> {armPID.setTarget(SCORED_POSITION);})
-                .addDisplacementMarker(5, () -> {setFlipPosition(FLIP_SCORE);})
-                .addDisplacementMarker(0.5, () -> {armPID.setTarget(MAX_POSITION);})
-                .build();
-
-        TrajectorySequence driveToScoreThird = drive.trajectorySequenceBuilder(new Pose2d(35.00, -67, Math.toRadians(90)))
-                .lineToLinearHeading(new Pose2d(20, -60, Math.toRadians(90.00)))
                 .splineToLinearHeading(new Pose2d(4, -32.5, Math.toRadians(90)), Math.toRadians(90))
+//                .addDisplacementMarker(70, () -> {armPID.setTarget(SCORED_POSITION);})
+                .addDisplacementMarker(0.5, () -> {armPID.setTarget(MAX_POSITION);})
+                .build();
+
+        TrajectorySequence driveToScoreThird = drive.trajectorySequenceBuilder(new Pose2d(36, -67, Math.toRadians(90)))
+                .lineToLinearHeading(new Pose2d(20, -60, Math.toRadians(90.00)))
+                .splineToLinearHeading(new Pose2d(1, -32.5, Math.toRadians(90)), Math.toRadians(90))
                 .setReversed(false)
-
-                .addDisplacementMarker(5, () -> {setFlipPosition(FLIP_SCORE);})
                 .addDisplacementMarker(0.5, () -> {armPID.setTarget(MAX_POSITION);})
                 .build();
 
-        TrajectorySequence driveToScoreFourth = drive.trajectorySequenceBuilder(new Pose2d(35.00, -68, Math.toRadians(90)))
+        TrajectorySequence driveToScoreFourth = drive.trajectorySequenceBuilder(new Pose2d(36, -68, Math.toRadians(90)))
                 .lineToLinearHeading(new Pose2d(20, -60, Math.toRadians(90.00)))
-                .splineToLinearHeading(new Pose2d(0, -32.5, Math.toRadians(90)), Math.toRadians(90))
-
-                .addDisplacementMarker(5, () -> {setFlipPosition(FLIP_SCORE);})
+                .splineToLinearHeading(new Pose2d(-2, -32.5, Math.toRadians(90)), Math.toRadians(90))
                 .addDisplacementMarker(0.5, () -> {armPID.setTarget(MAX_POSITION);})
                 .build();
 
-        TrajectorySequence driveToScoreFifth = drive.trajectorySequenceBuilder(new Pose2d(35.00, -68.5, Math.toRadians(90)))
+        TrajectorySequence driveToScoreFifth = drive.trajectorySequenceBuilder(new Pose2d(36, -68.5, Math.toRadians(90)))
                 .lineToLinearHeading(new Pose2d(20, -60, Math.toRadians(90.00)))
-                .splineToLinearHeading(new Pose2d(0, -32.5, Math.toRadians(90)), Math.toRadians(90))
-//                .addDisplacementMarker(52, () -> {armPID.setTarget(SCORED_POSITION);})
-                .addDisplacementMarker(5, () -> {setFlipPosition(FLIP_SCORE);})
+                .splineToLinearHeading(new Pose2d(-5, -32.5, Math.toRadians(90)), Math.toRadians(90))
                 .addDisplacementMarker(0.5, () -> {armPID.setTarget(MAX_POSITION);})
                 .build();
 
-        TrajectorySequence returnToZone = drive.trajectorySequenceBuilder(new Pose2d(3, -32.5, Math.toRadians(90.00)))
+        TrajectorySequence returnToZone = drive.trajectorySequenceBuilder(new Pose2d(4, -32.5, Math.toRadians(90.00)))
                 .setReversed(true)
                 .splineToConstantHeading(new Vector2d(36, -67), Math.toRadians(270.00))
                 .setReversed(false)
@@ -135,7 +131,7 @@ public class RRAuto4 extends LinearOpMode {
                     raising.set(true);})
                 .build();
 
-        TrajectorySequence returnToZoneLater = drive.trajectorySequenceBuilder(new Pose2d(4, -32.5, Math.toRadians(90.00)))
+        TrajectorySequence returnToZoneLater = drive.trajectorySequenceBuilder(new Pose2d(1, -32.5, Math.toRadians(90.00)))
                 .setReversed(true)
                 .splineToConstantHeading(new Vector2d(36, -68), Math.toRadians(270.00))
                 .setReversed(false)
@@ -144,16 +140,16 @@ public class RRAuto4 extends LinearOpMode {
                     raising.set(true);})
                 .build();
 
-        TrajectorySequence returnToZoneLast = drive.trajectorySequenceBuilder(new Pose2d(0, -32.5, Math.toRadians(90.00)))
+        TrajectorySequence returnToZoneLast = drive.trajectorySequenceBuilder(new Pose2d(-2, -32.5, Math.toRadians(90.00)))
                 .setReversed(true)
-                .splineToConstantHeading(new Vector2d(36, -68), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(36, -68.5), Math.toRadians(270.00))
                 .setReversed(false)
                 .addDisplacementMarker(5, () -> {setFlipPosition(FLIP_INTAKE);})
                 .addTemporalMarker(2.15, () -> {armPID.setTarget(SCORED_POSITION);
                     raising.set(true);})
                 .build();
 
-        TrajectorySequence park = drive.trajectorySequenceBuilder(new Pose2d(0, -35.5, Math.toRadians(90.00)))
+        TrajectorySequence park = drive.trajectorySequenceBuilder(new Pose2d(-5, -35.5, Math.toRadians(90.00)))
                 .setReversed(true)
                 .lineToConstantHeading(new Vector2d(40.00, -68))
                 .setReversed(false)
@@ -192,6 +188,10 @@ public class RRAuto4 extends LinearOpMode {
 //        setFlipPosition(0);
 
         raising.set(false);
+
+        boolean flipped = false;
+
+        ElapsedTime flipTimer = new ElapsedTime();
 
         while(opModeIsActive() && !isStopRequested()) {
             telemetry.addData("flip", flip.getCurrentPosition());
@@ -270,10 +270,12 @@ public class RRAuto4 extends LinearOpMode {
                         currentState = State.SCORING;
                         armPID.setTarget(SCORED_POSITION);
                         timer.reset();
+                    } if (armPID.getPosition() < MID_POSITION / 2) {
+                        setFlipPosition(FLIP_SCORE);
                     }
                     break;
                 case SCORING:
-                    if (timer.milliseconds() > 80) {
+                    if (timer.milliseconds() > 100) {
                         samplesScored++;
                         if (samplesScored == 5) {
                             currentState = State.PARK;
@@ -331,6 +333,18 @@ public class RRAuto4 extends LinearOpMode {
 
             }
 
+            if (flip.getTargetPosition() == FLIP_INTAKE && flip.getCurrentPosition() > -5 && !top.isPressed()) {
+                flipped = false;
+                flip.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                flip.setPower(1);
+            } else if (flip.getTargetPosition() == FLIP_INTAKE && top.isPressed() && !flipped) {
+                flipTimer.reset();
+                flipped = true;
+            } else if (flip.getTargetPosition() == FLIP_INTAKE && top.isPressed() && flipTimer.seconds() > 1) {
+                flip.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                setFlipPosition(0);
+            }
+
             drive.update();
             armPID.update();
 
@@ -360,7 +374,7 @@ public class RRAuto4 extends LinearOpMode {
 
 
     public void setFlipPosition(int position) {
-        setFlipPosition(position, 0.2);
+        setFlipPosition(position, 0.25);
     }
 
     public void setFlipPosition(int position, double power) {
