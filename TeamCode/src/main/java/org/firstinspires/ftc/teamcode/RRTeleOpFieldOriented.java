@@ -396,10 +396,15 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
         return Math.abs(target - armPID.getPosition()) < 300;
     }
 
-    public void setFlipPosition(int position) {
-        flip.setPower(0.5);
+    public void setFlipPosition(int position, double power) {
+        flip.setPower(power);
         flip.setTargetPosition(position + flipOffset);
         flip.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
+
+    public void setFlipPosition(int position) {
+        setFlipPosition(position, 0.3);
     }
 
 
@@ -468,12 +473,18 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
         if (armState == ArmState.X) {
             bumper.setPosition(0);
             armPID.setTarget(0);
+            if (flip.getCurrentPosition() > -10) {
+                setFlipPosition(5, 1);
+            }
         }
 
 
         if (armState == ArmState.SQUARE) {
             bumper.setPosition(0);
             armPID.setTarget(GRAB_POSITION);
+            if (flip.getCurrentPosition() > -10) {
+                setFlipPosition(5, 1);
+            }
         }
 
         if (armState == ArmState.TRIANGLE) {
@@ -482,6 +493,9 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
             if (armPID.getPosition() < MID_POSITION) {
                 setFlipPosition(FLIP_SCORE);
             }
+            if (flip.getCurrentPosition() < FLIP_SCORE + 10) {
+                setFlipPosition(FLIP_SCORE - 5, 1);
+            }
         }
 
         if (armState == ArmState.CIRCLE) {
@@ -489,6 +503,9 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
             armPID.setTarget(SCORED_POSITION);
             if (armPID.getPosition() < MID_POSITION) {
                 setFlipPosition(FLIP_SCORE);
+            }
+            if (flip.getCurrentPosition() < FLIP_SCORE + 10) {
+                setFlipPosition(FLIP_SCORE - 5, 1);
             }
         }
 

@@ -81,12 +81,11 @@ public class RRAuto4 extends LinearOpMode {
         TrajectorySequence pushOthers = drive.trajectorySequenceBuilder(new Pose2d(8.5, -37, Math.toRadians(90)))
                 .setReversed(true)
                 .splineToLinearHeading(new Pose2d(36.5, -28, Math.toRadians(0.00)), Math.toRadians(90.00))
-                .turn(0.01)
                 .setReversed(false)
                 .lineToLinearHeading(new Pose2d(36.5, -37.00, Math.toRadians(-70.00)))
-                .splineToLinearHeading(new Pose2d(46.5, -27, Math.toRadians(0.00)), Math.toRadians(90.00))
+                .splineToLinearHeading(new Pose2d(46.25, -27, Math.toRadians(0.00)), Math.toRadians(90.00))
                 .turn(0.01)
-                .lineToLinearHeading(new Pose2d(46.5, -37.00, Math.toRadians(-70.00)))
+                .lineToLinearHeading(new Pose2d(46.25, -37.00, Math.toRadians(-70.00)))
                 .setReversed(true)
                 .splineToLinearHeading(new Pose2d(63, -15.19, Math.toRadians(90.00)), Math.toRadians(0))
                 .splineToConstantHeading(new Vector2d(63, -45), Math.toRadians(270))
@@ -129,7 +128,7 @@ public class RRAuto4 extends LinearOpMode {
 
         TrajectorySequence returnToZone = drive.trajectorySequenceBuilder(new Pose2d(3, -32.5, Math.toRadians(90.00)))
                 .setReversed(true)
-                .splineToConstantHeading(new Vector2d(35, -67), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(36, -67), Math.toRadians(270.00))
                 .setReversed(false)
                 .addDisplacementMarker(5, () -> {setFlipPosition(FLIP_INTAKE);})
                 .addTemporalMarker(2.15, () -> {armPID.setTarget(SCORED_POSITION);
@@ -138,7 +137,7 @@ public class RRAuto4 extends LinearOpMode {
 
         TrajectorySequence returnToZoneLater = drive.trajectorySequenceBuilder(new Pose2d(4, -32.5, Math.toRadians(90.00)))
                 .setReversed(true)
-                .splineToConstantHeading(new Vector2d(35, -68), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(36, -68), Math.toRadians(270.00))
                 .setReversed(false)
                 .addDisplacementMarker(5, () -> {setFlipPosition(FLIP_INTAKE);})
                 .addTemporalMarker(2.15, () -> {armPID.setTarget(SCORED_POSITION);
@@ -147,7 +146,7 @@ public class RRAuto4 extends LinearOpMode {
 
         TrajectorySequence returnToZoneLast = drive.trajectorySequenceBuilder(new Pose2d(0, -32.5, Math.toRadians(90.00)))
                 .setReversed(true)
-                .splineToConstantHeading(new Vector2d(35, -68), Math.toRadians(270.00))
+                .splineToConstantHeading(new Vector2d(36, -68), Math.toRadians(270.00))
                 .setReversed(false)
                 .addDisplacementMarker(5, () -> {setFlipPosition(FLIP_INTAKE);})
                 .addTemporalMarker(2.15, () -> {armPID.setTarget(SCORED_POSITION);
@@ -202,18 +201,20 @@ public class RRAuto4 extends LinearOpMode {
                 case SCORE_FIRST:
                     if (!drive.isBusy()) {
                         currentState = State.SCORING_FIRST;
+                        armPID.setTarget(SCORED_POSITION);
                         timer.reset();
-                    } if (armPID.getPosition() < GRAB_POSITION) {
+                    } if (armPID.getPosition() < -5000) {
                         setFlipPosition(FLIP_SCORE);
                     }
                     break;
                 case SCORING_FIRST:
-                    if (timer.milliseconds() > 150) {
+                    if (timer.milliseconds() > 100) {
                         currentState = State.PUSH_OTHERS;
                         drive.followTrajectorySequenceAsync(pushOthers);
                         armPID.setTarget(GRAB_POSITION);
                         samplesScored++;
                         bumper.setPosition(0);
+                        setFlipPosition(FLIP_INTAKE);
                         timer.reset();
                     }
                     break;
@@ -223,13 +224,14 @@ public class RRAuto4 extends LinearOpMode {
                         drive.followTrajectorySequenceAsync(driveToScoreFar);
                         bumper.setPosition(1);
                     }
-                    double diff = 2.9;
+                    double diff = 2.7;
                     if (timer.seconds() > 3 + diff) {
                         setExtendPosition(0);
                         grabber.setPower(0);
                         pitch1.setPosition(0.1);
                         pitch2.setPosition(0.1);
-                    } else if (timer.seconds() > 2.6 + diff) {
+                        setFlipPosition(5, 1);
+                    } else if (timer.seconds() > 2.7 + diff) {
                         grabber.setPower(-1);
                     }  else if (timer.seconds() > 2.2 + diff) {
                         setExtendPosition(MAX_EXTEND);
@@ -238,7 +240,7 @@ public class RRAuto4 extends LinearOpMode {
                         pitch2.setPosition(0.6);
                     } else if (timer.seconds() > 1.6 + diff) {
                         grabber.setPower(1);
-                    } else if (timer.seconds() > 1.25 + diff) {
+                    } else if (timer.seconds() > 1.45 + diff) {
                         pitch1.setPosition(1);
                         pitch2.setPosition(1);
                     } else if (timer.seconds() > 0.3 + diff) {
@@ -248,7 +250,7 @@ public class RRAuto4 extends LinearOpMode {
 //                    else if (timer.seconds() > 3.5) {
 //                        grabber.setPower(-1);
 //                    }
-                    else if (timer.seconds() > 2.6) {
+                    else if (timer.seconds() > 2.7) {
                         grabber.setPower(-1);
                     } else if (timer.seconds() > 2.2) {
                         setExtendPosition(MAX_EXTEND);
@@ -261,8 +263,6 @@ public class RRAuto4 extends LinearOpMode {
                         setExtendPosition(-500);
                         pitch1.setPosition(1);
                         pitch2.setPosition(1);
-                    } else if (timer.seconds() > 0.3) {
-                        setFlipPosition(FLIP_INTAKE);
                     }
                     break;
                 case DRIVE_TO_SCORE:
@@ -273,7 +273,7 @@ public class RRAuto4 extends LinearOpMode {
                     }
                     break;
                 case SCORING:
-                    if (timer.milliseconds() > 100) {
+                    if (timer.milliseconds() > 80) {
                         samplesScored++;
                         if (samplesScored == 5) {
                             currentState = State.PARK;
@@ -360,7 +360,11 @@ public class RRAuto4 extends LinearOpMode {
 
 
     public void setFlipPosition(int position) {
-        flip.setPower(0.5);
+        setFlipPosition(position, 0.2);
+    }
+
+    public void setFlipPosition(int position, double power) {
+        flip.setPower(power);
         flip.setTargetPosition(position + flipOffset);
         flip.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
