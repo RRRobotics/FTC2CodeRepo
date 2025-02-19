@@ -21,7 +21,7 @@ public class DriveConstants {
 
     private static final int GRAB_POSITION = -3000;
 
-    private static final int MAX_POSITION = -33000;
+    private static final int MAX_POSITION = -31000;
 
     private static final int SCORED_POSITION = -19000;
     private static final int MID_POSITION = -9000;

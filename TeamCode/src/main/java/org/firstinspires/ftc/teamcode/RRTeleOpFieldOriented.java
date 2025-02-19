@@ -8,10 +8,12 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
@@ -31,7 +33,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @TeleOp(group = "advanced")
 @Config
 public class RRTeleOpFieldOriented extends LinearOpMode {
-    DcMotor arm, extend, flip;
+    DcMotorEx arm, extend, flip;
     Servo pitch1, pitch2, bumper;
     CRServo heading, grabber;
     TouchSensor bottom, top;
@@ -69,9 +71,9 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
         // We want to turn off velocity control for teleop
         // Velocity control per wheel is not necessary outside of motion profiled auto
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        arm = hardwareMap.get(DcMotor.class, "arm");
-        extend = hardwareMap.get(DcMotor.class, "extend");
-        flip = hardwareMap.get(DcMotor.class, "flip");
+        arm = hardwareMap.get(DcMotorEx.class, "arm");
+        extend = hardwareMap.get(DcMotorEx.class, "extend");
+        flip = hardwareMap.get(DcMotorEx.class, "flip");
         pitch1 = hardwareMap.get(Servo.class, "pitch1");
         pitch2 = hardwareMap.get(Servo.class, "pitch2");
         pitch2.setDirection(Servo.Direction.REVERSE);
@@ -126,12 +128,19 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
 
         ElapsedTime game = new ElapsedTime();
 
+        ElapsedTime extendTimer = new ElapsedTime();
+        int extendWait = 0;
+        boolean extended = false;
+
 
         FtcDashboard dashboard = FtcDashboard.getInstance();
         Telemetry dashboardTelemetry = dashboard.getTelemetry();
 
         while (opModeIsActive() && !isStopRequested()) {
             telemetry.addData("speed_factor:", speed_factor);
+            telemetry.addData("arm current", arm.getCurrent(CurrentUnit.AMPS));
+            telemetry.addData("extend current", extend.getCurrent(CurrentUnit.AMPS));
+            telemetry.addData("flip current", flip.getCurrent(CurrentUnit.AMPS));
             telemetry.addData("arm position", armPID.getPosition());
             telemetry.addData("arm target", armPID.getTarget());
             telemetry.addData("at arm 0", atArmPositionRough(0));
@@ -268,6 +277,21 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
 //            }
 
             controlHeading(gamepad1.right_stick_x);
+
+//            if (extend.getTargetPosition() == 0 && extendWait != extend.getCurrentPosition()) {
+//                extendWait = extend.getCurrentPosition();
+//                extendTimer.reset();
+//            }
+//            if (!extended) {
+//                extend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//                extend.setTargetPosition(0);
+//                extend.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//                extended = true;
+//            }
+//            if (extendTimer.seconds() > 1 && extendWait == extend.getCurrentPosition()) {
+//                extended = false;
+//            }
+
 
             Vector2d input;
             if (state == IntakeMode.OFF) {
@@ -434,6 +458,8 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
             }
         }
 
+
+
         if ((atArmPositionRough(0) && !bottom.isPressed()) || (!atArmPositionRough(0) && !bottom.isPressed()) && armState == ArmState.X) {
             homed = false;
         }
@@ -448,6 +474,10 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
         } else if (flip.getTargetPosition() == FLIP_INTAKE && top.isPressed() && flipTimer.seconds() > 1) {
             flip.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             setFlipPosition(0);
+        }
+
+        if (flip.getCurrentPosition() > -10 && flip.getTargetPosition() == FLIP_INTAKE) {
+            flip.setPower(0.1);
         }
 
 
