@@ -36,7 +36,7 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
     DcMotorEx arm, extend, flip;
     Servo pitch1, pitch2, bumper;
     CRServo heading, grabber;
-    TouchSensor bottom, top;
+    TouchSensor bottom, top, side;
 
     private double speed_factor = 0.6;
     private int offset, flipOffset;
@@ -83,12 +83,12 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
         bumper.setDirection(Servo.Direction.REVERSE);
         bottom = hardwareMap.touchSensor.get("bottom");
         top = hardwareMap.touchSensor.get("top");
+//        side = hardwareMap.touchSensor.get("side");
         telemetry.addData("initialization:", "is a success");
         telemetry.update();
 
         extend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        flip.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         extend.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         drive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
@@ -98,40 +98,25 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
         flipOffset = 0;
         int target = 0;
 
-        // get pose or make new one
-//        if (RRAuto3.endPose == null)
-//            RRAuto3.endPose = new Pose2d();
-//        drive.setPoseEstimate(RRAuto3.endPose);
         drive.setPoseEstimate(new Pose2d(45.00, -60.00, Math.toRadians(0)));
 
         waitForStart();
         pitch1.setPosition(0.3);
         pitch2.setPosition(0.3);
 
-//        flip.setPower(1);
-//        setFlipPosition(0);
-//        flip.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//        flip.setDirection(DcMotorSimple.Direction.REVERSE);
         bumper.setPosition(0);
 
 
         if (isStopRequested()) return;
 
         double speed_factor = 0.4;
-        boolean raising = false;
-        boolean grab = false;
-        boolean autoScore = false;
-        boolean flipSides = false;
         boolean lowering = false;
 
         ElapsedTime timer = new ElapsedTime();
 
         ElapsedTime game = new ElapsedTime();
 
-        ElapsedTime extendTimer = new ElapsedTime();
-        int extendWait = 0;
         boolean extended = false;
-
 
         FtcDashboard dashboard = FtcDashboard.getInstance();
         Telemetry dashboardTelemetry = dashboard.getTelemetry();
@@ -143,16 +128,13 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
             telemetry.addData("flip current", flip.getCurrent(CurrentUnit.AMPS));
             telemetry.addData("arm position", armPID.getPosition());
             telemetry.addData("arm target", armPID.getTarget());
-            telemetry.addData("at arm 0", atArmPositionRough(0));
             telemetry.addData("homed", homed);
-            telemetry.addData("bottom", bottom.isPressed());
             telemetry.addData("extend position", extend.getCurrentPosition());
             telemetry.addData("extend target", extend.getTargetPosition());
+            telemetry.addData("extended", extended);
             telemetry.addData("flip position", flip.getCurrentPosition());
             telemetry.addData("flip target", flip.getTargetPosition());
             telemetry.addData("flipped", flipped);
-            telemetry.addData("top", top.isPressed());
-            telemetry.addData("at flip 0", atFlipPosition(0));
             telemetry.addData("state", state);
             telemetry.update();
 
@@ -278,20 +260,17 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
 
             controlHeading(gamepad1.right_stick_x);
 
-//            if (extend.getTargetPosition() == 0 && extendWait != extend.getCurrentPosition()) {
-//                extendWait = extend.getCurrentPosition();
-//                extendTimer.reset();
-//            }
-//            if (!extended) {
+//            if (side.isPressed() && !extended) {
 //                extend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//                extend.setTargetPosition(0);
-//                extend.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//                setExtendPosition(0);
 //                extended = true;
+//            } else if (!extended) {
+//                extend.setPower(0.3);
 //            }
-//            if (extendTimer.seconds() > 1 && extendWait == extend.getCurrentPosition()) {
-//                extended = false;
+//
+//            if ((atExtendPosition(0) && !side.isPressed()) || (!atExtendPosition(0) && !side.isPressed()) && extend.getTargetPosition() == 0) {
+//                homed = false;
 //            }
-
 
             Vector2d input;
             if (state == IntakeMode.OFF) {
@@ -411,6 +390,9 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
     public boolean atFlipPosition(int target) {
         return Math.abs(target - flip.getCurrentPosition()) < 10;
     }
+    public boolean atExtendPosition(int target) {
+        return Math.abs(target - extend.getCurrentPosition()) < 10;
+    }
 
     public boolean atArmPosition(int target) {
         return Math.abs(target - armPID.getPosition()) < 50;
@@ -457,8 +439,6 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
                 armPID.setTarget(-8000);
             }
         }
-
-
 
         if ((atArmPositionRough(0) && !bottom.isPressed()) || (!atArmPositionRough(0) && !bottom.isPressed()) && armState == ArmState.X) {
             homed = false;
