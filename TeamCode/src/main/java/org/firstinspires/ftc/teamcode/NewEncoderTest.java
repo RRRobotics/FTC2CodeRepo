@@ -8,6 +8,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorController;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -32,7 +34,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @TeleOp(group = "advanced")
 @Config
 public class NewEncoderTest extends LinearOpMode {
-    DcMotor arm, extend, flip;
+    DcMotorEx arm, extend, flip;
     Servo pitch, heading, push, bumper;
     TouchSensor bottom;
 
@@ -48,9 +50,9 @@ public class NewEncoderTest extends LinearOpMode {
     private ArmState armState = ArmState.X;
 
 
-    public static double Kp = 0.0;
-    public static double Ki = 0.0;
-    public static double Kd = 0.0;
+    public static double kp = 0.0;
+    public static double ki = 0.0;
+    public static double kd = 0.0;
     public static int reference = 1000;
 
 
@@ -64,95 +66,46 @@ public class NewEncoderTest extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        arm = hardwareMap.get(DcMotor.class, "arm");
-        flip = hardwareMap.get(DcMotor.class, "flip");
-        extend = hardwareMap.get(DcMotor.class, "extend");
+        arm = hardwareMap.get(DcMotorEx.class, "arm");
+        flip = hardwareMap.get(DcMotorEx.class, "flip");
+//        extend = hardwareMap.get(DcMotor.class, "extend");
         bottom = hardwareMap.touchSensor.get("bottom");
-
-
-        waitForStart();
 
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         flip.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        arm.setPower(0.5);
-        arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//        arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        CustomPID armPID = new CustomPID(arm, kp, ki, kd, reference);
 
-//        flip.setPower(0.5);
-//        flip.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//        flip.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-
-//        flip.setDirection(DcMotorSimple.Direction.REVERSE);
-
-//        if (!isStopRequested()) return;
-
-        double integralSum = 0.0;
-        double lastError = 0;
-        int oldReference = reference;
-        boolean running = false;
-
-        ElapsedTime timer = new ElapsedTime();
+        waitForStart();
 
         FtcDashboard dashboard = FtcDashboard.getInstance();
         Telemetry dashboardTelemetry = dashboard.getTelemetry();
 
-        while (opModeIsActive() && !isStopRequested()) {
-            telemetry.addData("flip", flip.getCurrentPosition());
-            telemetry.addData("arm", arm.getCurrentPosition());
-            telemetry.addData("arm target", arm.getTargetPosition());
-            telemetry.addData("extend", extend.getCurrentPosition());
-            telemetry.addData("is pressed", bottom.isPressed());
-            telemetry.addData("value", bottom.getValue());
+        ElapsedTime timer = new ElapsedTime();
 
-            int encoderPosition = -arm.getCurrentPosition();
-            double error = reference - encoderPosition;
+        flip.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        flip.setPower(0.5);
+
+        while (opModeIsActive() && !isStopRequested()) {
+
+//            System.out.println(arm.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION));
 
             dashboardTelemetry.addData("target", reference);
-            dashboardTelemetry.addData("actual", encoderPosition);
-            dashboardTelemetry.addData("error", error);
-            dashboardTelemetry.addData("Kp", Kp);
-            dashboardTelemetry.addData("Ki", Ki);
-            dashboardTelemetry.addData("Kd", Kd);
+            dashboardTelemetry.addData("actual", armPID.getPosition());
+            dashboardTelemetry.addData("kp", kp);
+            dashboardTelemetry.addData("ki", ki);
+            dashboardTelemetry.addData("kd", kd);
+            dashboardTelemetry.addData("running", armPID.isRunning());
+            dashboardTelemetry.addData("flip", flip.getCurrentPosition());
             dashboardTelemetry.update();
 
-            if (oldReference != reference) {
-                running = true;
-            } else if (Math.abs(error) < 10) {
-                running = false;
-            }
-            if (!running && Math.abs(error) > 50) {
-                running = true;
-            }
+//            reference = -(int) (6000 + Math.sin(timer.seconds() / 2) * 5000);
 
-
-//            Kp = 0.01;
-//            Ki = 0.0;
-//            Kd = 0.0001;
-
-
-            if (running) {
-
-                double derivative = (double) (error - lastError) / (double) timer.seconds();
-
-                integralSum = integralSum + (error * timer.seconds());
-
-                double out = (Kp * error) + (Ki * integralSum) + (Kd * derivative);
-
-                arm.setPower(out);
-
-                lastError = error;
-
-                timer.reset();
-
-            } else {
-                arm.setPower(0);
-            }
-
-            oldReference = reference;
-
-            System.out.println(running);
+            armPID.setKp(kp);
+            armPID.setKi(ki);
+            armPID.setKd(kd);
+            armPID.setTarget(reference);
+            armPID.update();
 
             telemetry.update();
         }

@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.roadrunner.control.PIDCoefficients;
+import com.acmerobotics.roadrunner.control.PIDFController;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -10,12 +12,14 @@ public class CustomPID {
     private double Ki;
     private double Kd;
     private int target;
-    private boolean running = false;
+    private boolean running = true;
     ElapsedTime timer = new ElapsedTime();
     double integralSum = 0.0;
     double lastError = 0;
     int oldTarget = target;
     boolean override = false;
+    int position;
+    PIDFController controller;
 
     public CustomPID(DcMotor motor, double kp, double ki, double kd, int target) {
         this.motor = motor;
@@ -27,11 +31,17 @@ public class CustomPID {
         motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        controller = new PIDFController(new PIDCoefficients(Kp, Ki, Kd));
+
     }
 
     public void update() {
-        int encoderPosition = -motor.getCurrentPosition();
-        double error = target - encoderPosition;
+
+        position = -(int)(motor.getCurrentPosition());
+        double error = target - position;
+
+
+//        motor.setPower(controller.update);
 
         if (oldTarget != target) {
             running = true;
@@ -51,6 +61,7 @@ public class CustomPID {
             if (!override)
                 motor.setPower(out);
 
+
             lastError = error;
 
             timer.reset();
@@ -69,6 +80,7 @@ public class CustomPID {
     public void setTarget(int target) {
         this.target = target;
         override = false;
+        motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     public boolean isRunning() {
@@ -92,7 +104,7 @@ public class CustomPID {
     }
 
     public int getPosition() {
-        return -motor.getCurrentPosition();
+        return position;
     }
 
     public void setPower(double power) {
