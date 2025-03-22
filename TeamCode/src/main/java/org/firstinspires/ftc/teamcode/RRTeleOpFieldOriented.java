@@ -110,6 +110,7 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
 
         bumper.setPosition(0);
 
+        ElapsedTime eject = new ElapsedTime();
 
         if (isStopRequested()) return;
 
@@ -196,16 +197,23 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
                 pitch2.setPosition(1);
                 grabber.setPower(1);
             } else if (gamepad1.left_bumper) {
-                pitch1.setPosition(0.5);
-                pitch2.setPosition(0.5);
+                setExtendPosition(MAX_EXTEND, 1);
                 if (!lowering) {
+                    eject.reset();
                     lowering = true;
-                    timer.reset();
-                } if (timer.milliseconds() > 300) {
+                } if (eject.milliseconds() > 100) {
+                    pitch1.setPosition(0.8);
+                    pitch2.setPosition(0.8);
+                }
+                if (eject.milliseconds() > 400) {
                     grabber.setPower(-1);
                 }
+            } else if (state == IntakeMode.OFF){
+                setExtendPosition(0);
+                grabber.setPower(0);
             } else {
                 grabber.setPower(0);
+                lowering = false;
             }
             if (!(gamepad1.left_bumper || gamepad1.right_bumper)) {
                 if (state == IntakeMode.OFF) {
@@ -215,7 +223,6 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
                     pitch1.setPosition(0.6);
                     pitch2.setPosition(0.6);
                 }
-                lowering = false;
             }
 
             // increase speed when right trigger
@@ -230,7 +237,7 @@ public class RRTeleOpFieldOriented extends LinearOpMode {
             controlHeading(gamepad1.right_stick_x);
 
             // extend rezero
-            if (extend.getTargetPosition() >= 0 && !extended && state == IntakeMode.OFF) {
+            if (extend.getTargetPosition() >= 0 && !extended && state == IntakeMode.OFF && game.seconds() > 1) {
                 if (side.isPressed()) {
                     extended = true;
                     extend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);

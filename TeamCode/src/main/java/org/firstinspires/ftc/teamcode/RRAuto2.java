@@ -6,6 +6,7 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.acmerobotics.roadrunner.trajectory.constraints.MecanumVelocityConstraint;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -22,6 +23,7 @@ import java.text.DecimalFormat;
 
 
 @Autonomous(name = "RRAuto2")
+@Disabled
 public class RRAuto2 extends LinearOpMode {
 
     DcMotor FR, FL, BR, BL;
